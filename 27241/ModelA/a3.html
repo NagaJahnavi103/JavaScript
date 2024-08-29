@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tic-Tac-Toe</title>
+<style>
+    #gameBoard {
+        display: grid;
+        grid-template-columns: repeat(3, 100px);
+        grid-gap: 10px;
+        justify-content: center;
+    }
+    .cell {
+        height: 100px;
+        background: #eee;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 24px;
+        cursor: pointer;
+    }
+    .cell:hover {
+        background: #ccc;
+    }
+    #gameStatus, #scoreBoard {
+        text-align: center;
+        margin: 10px 0;
+        font-size: 20px;
+    }
+    #scoreBoard {
+        font-size: 18px;
+    }
+    button {
+        display: block;
+        margin: 20px auto;
+        padding: 10px 20px;
+        cursor: pointer;
+    }
+</style>
+</head>
+<body>
+
+<div id="gameBoard">
+    <div class="cell" data-cell-index="0"></div>
+    <div class="cell" data-cell-index="1"></div>
+    <div class="cell" data-cell-index="2"></div>
+    <div class="cell" data-cell-index="3"></div>
+    <div class="cell" data-cell-index="4"></div>
+    <div class="cell" data-cell-index="5"></div>
+    <div class="cell" data-cell-index="6"></div>
+    <div class="cell" data-cell-index="7"></div>
+    <div class="cell" data-cell-index="8"></div>
+</div>
+
+<div id="gameStatus">Player X's turn</div>
+<div id="scoreBoard">Player X: 0 | Player O: 0</div>
+<button onclick="resetGame()">Restart Game</button>
+
+<script>
+    let currentPlayer = "X";
+    let playerXScore = 0;
+    let playerOScore = 0;
+    let gameBoard = Array(9).fill(null);
+    let gameActive = true;
+    const winPatterns = [
+        [0, 1, 2],
+        [3, 4, 5],
+        [6, 7, 8],
+        [0, 3, 6],
+        [1, 4, 7],
+        [2, 5, 8],
+        [0, 4, 8],
+        [2, 4, 6]
+    ];
+
+    document.querySelectorAll('.cell').forEach(cell => cell.addEventListener('click', function() {
+        const cellIndex = this.getAttribute('data-cell-index');
+        if (gameBoard[cellIndex] || !gameActive) return;
+
+        gameBoard[cellIndex] = currentPlayer;
+        this.textContent = currentPlayer;
+
+        let gameResult = checkWin();
+        if (gameResult === "win") {
+            document.getElementById('gameStatus').textContent = `Player ${currentPlayer} wins!`;
+            updateScore(currentPlayer);
+        } else if (gameResult === "draw") {
+            document.getElementById('gameStatus').textContent = "It's a draw!";
+        }
+
+        if (gameResult !== "ongoing") {
+            gameActive = false;
+        } else {
+            currentPlayer = currentPlayer === "X" ? "O" : "X";
+            document.getElementById('gameStatus').textContent = `Player ${currentPlayer}'s turn`;
+        }
+    }));
+
+    function checkWin() {
+        for (let pattern of winPatterns) {
+            const [a, b, c] = pattern;
+            if (gameBoard[a] && gameBoard[a] === gameBoard[b] && gameBoard[a] === gameBoard[c]) {
+                return "win";
+            }
+        }
+
+        if (!gameBoard.includes(null)) {
+            return "draw";
+        }
+
+        return "ongoing";
+    }
+
+    function updateScore(winner) {
+        if (winner === "X") {
+            playerXScore++;
+        } else {
+            playerOScore++;
+        }
+        document.getElementById('scoreBoard').textContent = `Player X: ${playerXScore} | Player O: ${playerOScore}`;
+    }
+
+    function resetGame() {
+        currentPlayer = "X";
+        gameBoard = Array(9).fill(null);
+        gameActive = true;
+        document.querySelectorAll('.cell').forEach(cell => cell.textContent = '');
+        document.getElementById('gameStatus').textContent = "Player X's turn";
+    }
+</script>
+
+</body>
+</html>
