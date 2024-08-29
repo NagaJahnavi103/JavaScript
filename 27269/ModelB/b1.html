@@ -3,71 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EduApp</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <title>Educational Platform</title>
     <style>
-        .subject-card {
-            margin: 10px;
-            cursor: pointer;
-        }
-        .tab-content {
-            padding: 20px;
-        }
+        body { font-family: 'Arial', sans-serif; }
+        .subject-list, .lesson-list { list-style: none; padding: 0; }
+        .subject-list li, .lesson-list li { padding: 10px; border-bottom: 1px solid #ccc; }
+        .subject-list li:hover, .lesson-list li:hover { background-color: #f0f0f0; }
+        .content { max-width: 800px; margin: auto; }
     </style>
 </head>
 <body>
-
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
-  <a class="navbar-brand" href="#">EduApp</a>
-</nav>
-
-<div class="container mt-4">
-    <div class="row" id="subjectList"></div>
-
-    <div id="subjectContent" style="display:none;">
-        <ul class="nav nav-tabs" id="subjectTabs">
-            <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#lessons">Lessons</a></li>
-            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tests">Test Papers</a></li>
-            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#bits">Bit Papers</a></li>
+    <div class="content">
+        <h1>Educational Platform</h1>
+        <h2>Subjects</h2>
+        <ul class="subject-list" id="subjectList">
+            <!-- Dynamically loaded -->
         </ul>
-        <div class="tab-content" id="subjectTabContent">
-            <div class="tab-pane fade show active" id="lessons">Lessons will be displayed here.</div>
-            <div class="tab-pane fade" id="tests">Test papers will be listed here.</div>
-            <div class="tab-pane fade" id="bits">Bit papers content goes here.</div>
-        </div>
     </div>
-</div>
 
-<script>
-    const subjects = ['Mathematics', 'Physics', 'Biology', 'History'];
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const subjects = [
+                { name: "Mathematics", lessons: ["Algebra", "Geometry", "Calculus"] },
+                { name: "Physics", lessons: ["Mechanics", "Electromagnetism", "Quantum Physics"] },
+                { name: "Computer Science", lessons: ["Algorithms", "Data Structures", "Web Development"] }
+            ];
 
-    document.addEventListener('DOMContentLoaded', function() {
-        const subjectList = document.getElementById('subjectList');
-        const subjectContent = document.getElementById('subjectContent');
+            const subjectListElement = document.getElementById('subjectList');
+            subjects.forEach(subject => {
+                const subjectElement = document.createElement('li');
+                subjectElement.textContent = subject.name;
+                subjectElement.onclick = () => showSubjectDetail(subject);
+                subjectListElement.appendChild(subjectElement);
+            });
 
-        subjects.forEach(subject => {
-            let card = document.createElement('div');
-            card.className = 'col-md-4';
-            card.innerHTML = `<div class="card subject-card">
-                <div class="card-body">
-                    <h5 class="card-title">${subject}</h5>
-                </div>
-            </div>`;
-            card.onclick = function() { showSubjectContent(subject); };
-            subjectList.appendChild(card);
+            function showSubjectDetail(subject) {
+                const contentDiv = document.querySelector('.content');
+                contentDiv.innerHTML = `
+                    <h2>${subject.name}</h2>
+                    <p>Welcome to ${subject.name}. Here you can find various resources to learn from.</p>
+                    <h3>Lessons:</h3>
+                    <ul class="lesson-list">
+                        ${subject.lessons.map(lesson => `<li>${lesson}</li>`).join('')}
+                    </ul>
+                    <button onclick="goBack()">Back to Subjects</button>
+                `;
+            }
+
+            function goBack() {
+                location.reload(); // Simplistic approach for demo. Ideally, manage state better.
+            }
         });
-
-        function showSubjectContent(subject) {
-            subjectContent.style.display = 'block';
-            // Here you would typically load content dynamically based on the subject
-            // For now, we'll just change the header
-            document.querySelector('.navbar-brand').innerText = 'EduApp - ' + subject;
-        }
-    });
-</script>
-
-<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    </script>
 </body>
 </html>
