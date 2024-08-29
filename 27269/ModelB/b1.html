@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduApp</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .subject-card {
+            margin: 10px;
+            cursor: pointer;
+        }
+        .tab-content {
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <a class="navbar-brand" href="#">EduApp</a>
+</nav>
+
+<div class="container mt-4">
+    <div class="row" id="subjectList"></div>
+
+    <div id="subjectContent" style="display:none;">
+        <ul class="nav nav-tabs" id="subjectTabs">
+            <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#lessons">Lessons</a></li>
+            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tests">Test Papers</a></li>
+            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#bits">Bit Papers</a></li>
+        </ul>
+        <div class="tab-content" id="subjectTabContent">
+            <div class="tab-pane fade show active" id="lessons">Lessons will be displayed here.</div>
+            <div class="tab-pane fade" id="tests">Test papers will be listed here.</div>
+            <div class="tab-pane fade" id="bits">Bit papers content goes here.</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const subjects = ['Mathematics', 'Physics', 'Biology', 'History'];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const subjectList = document.getElementById('subjectList');
+        const subjectContent = document.getElementById('subjectContent');
+
+        subjects.forEach(subject => {
+            let card = document.createElement('div');
+            card.className = 'col-md-4';
+            card.innerHTML = `<div class="card subject-card">
+                <div class="card-body">
+                    <h5 class="card-title">${subject}</h5>
+                </div>
+            </div>`;
+            card.onclick = function() { showSubjectContent(subject); };
+            subjectList.appendChild(card);
+        });
+
+        function showSubjectContent(subject) {
+            subjectContent.style.display = 'block';
+            // Here you would typically load content dynamically based on the subject
+            // For now, we'll just change the header
+            document.querySelector('.navbar-brand').innerText = 'EduApp - ' + subject;
+        }
+    });
+</script>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

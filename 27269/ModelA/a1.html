@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduLearn</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <style>
+        body { padding-top: 60px; }
+        .subject-list a { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
+        <a class="navbar-brand" href="#">EduLearn</a>
+    </nav>
+
+    <div class="container">
+        <div class="row" id="subject-list">
+            <div class="col-md-4 subject-list">
+                <h2>Subjects</h2>
+                <ul class="list-group">
+                    <li class="list-group-item"><a href="#math">Mathematics</a></li>
+                    <li class="list-group-item"><a href="#science">Science</a></li>
+                    <!-- Add more subjects here -->
+                </ul>
+            </div>
+            <div class="col-md-8" id="subject-content">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', (e) => {
+            const subjectList = document.getElementById('subject-list');
+            const subjectContent = document.getElementById('subject-content');
+
+            subjectList.addEventListener('click', (event) => {
+                if (event.target.tagName === 'A') {
+                    const subject = event.target.getAttribute('href').substring(1);
+                    loadSubjectContent(subject);
+                    event.preventDefault();
+                }
+            });
+
+            function loadSubjectContent(subject) {
+                const content = getSubjectContent(subject);
+                subjectContent.innerHTML = content;
+            }
+
+            function getSubjectContent(subject) {
+                // Static content for demonstration
+                switch (subject) {
+                    case 'math':
+                        return `
+                            <h2>Mathematics</h2>
+                            <section>
+                                <h3>Lessons</h3>
+                                <p>Lesson content here...</p>
+                            </section>
+                            <section>
+                                <h3>Test Papers</h3>
+                                <a href="math_test.pdf" target="_blank" download>Download Test Paper</a>
+                            </section>
+                            <section>
+                                <h3>Bit Papers</h3>
+                                <a href="math_bit.pdf" target="_blank" download>Download Bit Paper</a>
+                            </section>
+                            <!-- p5.js example can be embedded here -->
+                        `;
+                    case 'science':
+                        return `<h2>Science</h2>...`; // Add content for science
+                    default:
+                        return '<h2>Select a subject to begin</h2>';
+                }
+            }
+        });
+    </script>
+</body>
