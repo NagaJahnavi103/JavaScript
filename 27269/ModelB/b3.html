@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Educational Platform</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background: #333;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+        }
+        nav ul {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        nav ul li {
+            margin: 10px;
+            cursor: pointer;
+        }
+        #contentArea {
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>EduLearn</h1>
+    </header>
+    <nav>
+        <ul id="subjectList"></ul>
+    </nav>
+    <main id="contentArea">
+        <!-- Dynamic content will be loaded here -->
+    </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const subjects = [
+                {name: "Mathematics", content: "<h2>Mathematics Lessons</h2><p>Here are some math lessons.</p>"},
+                {name: "Physics", content: "<h2>Physics Lessons</h2><p>Explore the wonders of physics.</p>"},
+                {name: "Biology", content: "<h2>Biology Lessons</h2><p>Learn about life and living organisms.</p>"}
+            ];
+
+            const subjectList = document.getElementById('subjectList');
+            const contentArea = document.getElementById('contentArea');
+
+            subjects.forEach(subject => {
+                const listItem = document.createElement('li');
+                listItem.textContent = subject.name;
+                listItem.onclick = () => {
+                    contentArea.innerHTML = subject.content;
+                };
+                subjectList.appendChild(listItem);
+            });
+        });
+    </script>
+</body>
+</html>
