@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Wardrobe with Outfit Tracking</title>
+    <!-- Include FullCalendar via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .outfit {
+            background: #f9f9f9;
+            padding: 10px;
+            margin: 10px;
+            border: 1px solid #ddd;
+            cursor: move;
+        }
+        .calendar {
+            width: 80%;
+            margin: 40px auto;
+        }
+        .history, .suggestions {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Virtual Wardrobe with Outfit Tracking</h1>
+    <div class="outfit-assembly">
+        <h3>Create Outfits Here</h3>
+        <div class="outfit" id="current-outfit">
+            <!-- Outfits will be assembled here -->
+        </div>
+    </div>
+    <button id="mark-as-worn">Mark as Worn</button>
+    
+    <div class="history">
+        <h3>Outfit History</h3>
+        <ul id="outfit-history">
+            <!-- Outfit history will be listed here -->
+        </ul>
+    </div>
+
+    <div class="suggestions">
+        <h3>When to Wear Again?</h3>
+        <div id="suggestion">
+            <!-- Suggestions will be displayed here -->
+        </div>
+    </div>
+
+    <div class="calendar" id="calendar"></div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Initialize drag and drop
+    $(".outfit").draggable({
+        helper: "clone"
+    });
+
+    $("#current-outfit").droppable({
+        drop: function(event, ui) {
+            $(this).append(ui.helper.clone());
+        }
+    });
+
+    // Calendar
+    var calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+        initialView: 'dayGridMonth',
+        events: loadEventsFromStorage()
+    });
+    calendar.render();
+
+    // Button functionality
+    $("#mark-as-worn").click(function() {
+        var outfitItems = $("#current-outfit").children().map(function() {
+            return $(this).text();
+        }).get().join(', ');
+
+        if (outfitItems.length > 0) {
+            var event = {
+                title: outfitItems,
+                start: new Date(),
+                allDay: true
+            };
+            calendar.addEvent(event);
+
+            updateOutfitHistory(outfitItems);
+            suggestNextWearDate(outfitItems);
+        }
+    });
+
+    function updateOutfitHistory(outfit) {
+        var history = JSON.parse(localStorage.getItem('outfitHistory') || '{}');
+        if (history[outfit]) {
+            history[outfit].count++;
+            history[outfit].dates.push(new Date().toISOString().split('T')[0]);
+        } else {
+            history[outfit] = { count: 1, dates: [new Date().toISOString().split('T')[0]] };
+        }
+        localStorage.setItem('outfitHistory', JSON.stringify(history));
+        displayOutfitHistory();
+    }
+
+    function displayOutfitHistory() {
+        var historyHTML = '';
+        var history = JSON.parse(localStorage.getItem('outfitHistory') || '{}');
+        for (var outfit in history) {
+            historyHTML += `<li>${outfit} - Worn ${history[outfit].count} times. Dates: ${history[outfit].dates.join(', ')}</li>`;
+        }
+        $("#outfit-history").html(historyHTML);
+    }
+
+    function suggestNextWearDate(outfit) {
+        var history = JSON.parse(localStorage.getItem('outfitHistory') || '{}');
+        if (history[outfit]) {
+            var daysSinceLastWorn = (new Date() - new Date(history[outfit].dates[history[outfit].dates.length - 1])) / (1000 * 3600 * 24);
+            var suggestedInterval = Math.max(7, daysSinceLastWorn * 2); // Suggest wearing again in at least 7 days or double the last interval
+            $("#suggestion").text(`Consider wearing this outfit again in about ${suggestedInterval} days.`);
+        }
+    }
+
+    function loadEventsFromStorage() {
+        var events = [];
+        var history = JSON.parse(localStorage.getItem('outfitHistory') || '{}');
+        for (var outfit in history) {
+            history[outfit].dates.forEach(date => {
+                events.push({
+                    title: outfit,
+                    start: date,
+                    allDay: true
+                });
+            });
+        }
+        return events;
+    }
+
+    displayOutfitHistory();
+});
+</script>
+
+</body>
+</html>

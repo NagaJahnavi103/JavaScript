@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Virtual Wardrobe</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
+    <style>
+        body { font-family: 'Arial', sans-serif; padding: 20px; }
+        .wardrobe, .outfit-area { border: 1px solid #ddd; padding: 15px; margin-bottom: 20px; }
+        .item { padding: 10px; background: #f4f4f4; margin: 5px; cursor: move; display: inline-block; }
+        #calendar { max-width: 900px; margin: 40px auto; }
+        .history { margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Virtual Wardrobe with Usage Tracking</h1>
+    <div class="row">
+        <div class="col-md-4 wardrobe">
+            <h3>Wardrobe</h3>
+            <div class="item" draggable="true">Shirt</div>
+            <div class="item" draggable="true">Trousers</div>
+            <!-- More items can be added here -->
+        </div>
+        <div class="col-md-8">
+            <div class="outfit-area" id="outfit-area">
+                <h3>Create Your Outfit</h3>
+                <div>Drag items here</div>
+            </div>
+            <div id="calendar"></div>
+        </div>
+    </div>
+    <div class="history">
+        <h3>Outfit History</h3>
+        <ul id="outfitHistory"></ul>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let calendarEl = document.getElementById('calendar');
+    let calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        events: [],
+        droppable: true,
+        drop: function(info) {
+            let event = {
+                title: 'Outfit',
+                start: info.dateStr,
+                allDay: true,
+                outfit: []
+            };
+            // Collect outfit items
+            $('#outfit-area .item').each(function() {
+                event.outfit.push($(this).text());
+            });
+            if (event.outfit.length) {
+                calendar.addEvent(event);
+                updateOutfitHistory(event);
+            }
+            $('#outfit-area').html('<h3>Create Your Outfit</h3><div>Drag items here</div>');
+        }
+    });
+    calendar.render();
+
+    // Make items draggable
+    $('.item').on('dragstart', function(event) {
+        event.originalEvent.dataTransfer.setData('text', event.target.id);
+    });
+
+    // Make outfit area droppable
+    $('#outfit-area').on('dragover', function(event) {
+        event.preventDefault();
+    }).on('drop', function(event) {
+        event.preventDefault();
+        let data = event.originalEvent.dataTransfer.getData('text');
+        let draggedElement = document.getElementById(data);
+        $(this).append($(draggedElement).clone().attr('draggable', false));
+    });
+
+    function updateOutfitHistory(event) {
+        let date = event.start.toLocaleDateString();
+        let outfitStr = event.outfit.join(', ');
+        let $history = $('#outfitHistory');
+        $history.append(`<li>Worn on ${date}: ${outfitStr}</li>`);
+
+        // Here you would implement logic to suggest when to repeat an outfit
+        // For simplicity, let's just avoid repeating in the last 3 weeks
+        let lastThreeWeeks = new Date();
+        lastThreeWeeks.setDate(lastThreeWeeks.getDate() - 21);
+        let events = calendar.getEvents();
+        let canRepeat = events.every(e => 
+            !e.outfit || JSON.stringify(e.outfit) !== JSON.stringify(event.outfit) || e.start < lastThreeWeeks
+        );
+
+        if (canRepeat) {
+            console.log('You can wear this outfit again.');
+        } else {
+            console.log('Maybe wait a bit before wearing this outfit again.');
+        }
+    }
+});
+</script>
+
+</body>
+</html>
