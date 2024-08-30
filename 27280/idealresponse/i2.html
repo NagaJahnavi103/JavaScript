@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Enhanced Grocery List Sync</title>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+    />
+    <style>
+      body {
+        padding: 20px;
+      }
+      .list-item {
+        margin: 5px 0;
+        padding: 10px;
+        border: 1px solid #ccc;
+      }
+      .aisle {
+        font-style: italic;
+        color: #6c757d;
+      }
+      #notifications {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        width: 300px;
+        z-index: 1000;
+      }
+      .notification {
+        padding: 10px;
+        margin-bottom: 10px;
+        background-color: #f8f9fa;
+        border-left: 4px solid #007bff;
+        box-shadow: 0 5px 8px -6px rgba(0, 0, 0, 0.2);
+      }
+      .notification.success {
+        border-color: #28a745;
+        background-color: #d4edda;
+      }
+      .notification.error {
+        border-color: #dc3545;
+        background-color: #f8d7da;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <h2>Grocery List</h2>
+      <div id="auth">
+        <input id="user" placeholder="Username" />
+        <button onclick="authUser()">Login</button>
+      </div>
+      <div id="groceryApp" style="display: none">
+        <input id="itemName" placeholder="Item Name" />
+        <input id="itemCategory" placeholder="Category" />
+        <input id="itemAisle" placeholder="Aisle" />
+        <input id="itemPrice" placeholder="Price" type="number" step="0.01" />
+        <button onclick="addItem()">Add Item</button>
+        <ul id="groceryList" class="list-group"></ul>
+      </div>
+      <div id="notifications"></div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script>
+      // Initialize Firebase
+      const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_AUTH_DOMAIN",
+        databaseURL: "YOUR_DATABASE_URL",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_STORAGE_BUCKET",
+        messagingSenderId: "YOUR_SENDER_ID",
+        appId: "YOUR_APP_ID"
+      };
+      firebase.initializeApp(firebaseConfig);
+      const database = firebase.database();
+
+      let currentUser = null;
+      const notifications = document.getElementById("notifications");
+
+      function authUser() {
+        currentUser = document.getElementById("user").value;
+        if (currentUser) {
+          document.getElementById("auth").style.display = "none";
+          document.getElementById("groceryApp").style.display = "block";
+          showNotification("Logged in successfully!", "success");
+        } else {
+          showNotification("Please enter a username.", "error");
+        }
+      }
+
+      function addItem() {
+        const itemName = document.getElementById("itemName").value;
+        if (!itemName) {
+          showNotification("Item name is required.", "error");
+          return;
+        }
+        const item = {
+          name: itemName,
+          category: document.getElementById("itemCategory").value,
+          aisle: document.getElementById("itemAisle").value,
+          price: document.getElementById("itemPrice").value,
+          user: currentUser,
+        };
+        database
+          .ref("items")
+          .push(item)
+          .then(() => {
+            showNotification(
+              `${item.name} was added to the list by ${currentUser}`,
+              "success"
+            );
+          });
+      }
+
+      function removeItem(key) {
+        database
+          .ref("items")
+          .child(key)
+          .once("value", (snapshot) => {
+            const itemName = snapshot.val().name;
+            database
+              .ref("items")
+              .child(key)
+              .remove()
+              .then(() => {
+                showNotification(
+                  `${itemName} was removed from the list`,
+                  "success"
+                );
+              })
+              .catch(() => {
+                showNotification("Error removing item.", "error");
+              });
+          });
+      }
+
+      function showNotification(message, type = "info") {
+        const notification = document.createElement("div");
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        notifications.appendChild(notification);
+        setTimeout(() => {
+          notification.remove();
+        }, 5000);
+      }
+
+      // Listen for added items
+      database.ref("items").on("child_added", (snapshot) => {
+        const item = snapshot.val();
+        if (snapshot.val().user !== currentUser) {
+          showNotification(`${item.name} was added by ${item.user}`, "info");
+        }
+        checkForSale(item);
+        const listItem = `<li class="list-group-item list-item">
+            ${item.name} - <span class="aisle">Aisle: ${item.aisle}</span> - 
+            Price: $${item.price} - 
+            Added by: ${item.user}
+            <button onclick="removeItem('${snapshot.key}')">Remove</button>
+        </li>`;
+        document.getElementById("groceryList").innerHTML += listItem;
+      });
+
+      // Listen for removed items
+      database.ref("items").on("child_removed", (snapshot) => {
+        const node = document.querySelector(
+          `[onclick="removeItem('${snapshot.key}')"]`
+        ).parentNode;
+        node.remove();
+        showNotification(
+          `${snapshot.val().name} was removed from the list by ${
+            snapshot.val().user
+          }`,
+          "info"
+        );
+      });
+
+      // Mock API for price comparison - In real scenarios, this would be a call to an actual API
+      function checkForSale(item) {
+        // Simulate a sale event
+        const saleProbability = Math.random();
+        if (saleProbability > 0.8) {
+          // 20% chance of a sale
+          const newPrice = item.price * (0.8 + Math.random() * 0.2); // 80% to 100% of original price
+          showNotification(
+            `${item.name} is on sale! New price: $${newPrice.toFixed(2)}`,
+            "success"
+          );
+        }
+      }
+
+      // Check for sales every 5 minutes
+      setInterval(() => {
+        database
+          .ref("items")
+          .once("value")
+          .then((snapshot) => {
+            snapshot.forEach((childSnapshot) => {
+              checkForSale(childSnapshot.val());
+            });
+          });
+      }, 300000); // 300,000 ms = 5 minutes
+    </script>
+  </body>
+</html>

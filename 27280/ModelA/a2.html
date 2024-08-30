@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collaborative Grocery List with Sale Alerts</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        #groceryList { list-style-type: none; padding: 0; }
+        .item { padding: 10px; border-bottom: 1px solid #eee; }
+        .item button { margin-left: 10px; }
+        #notifications {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+            z-index: 1000;
+        }
+        .notification {
+            padding: 10px;
+            margin-top: 10px;
+            background: #e7f3fe;
+            border-left: 6px solid #2196F3;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container mt-5">
+    <h2>Grocery List</h2>
+    <div id="auth"></div>
+    <input type="text" id="itemInput" placeholder="Add item" class="form-control mb-2">
+    <button onclick="addItem()" class="btn btn-primary">Add Item</button>
+    <ul id="groceryList"></ul>
+    <div id="notifications"></div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script>
+    const firebaseConfig = {
+        // Your Firebase config here
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const auth = firebase.auth();
+
+    // Authentication setup
+    auth.onAuthStateChanged(loadList);
+
+    function loadList() {
+        database.ref('items').on('child_added', snapshot => {
+            showNotification(`${snapshot.val().name} was added!`);
+            renderList();
+        });
+
+        database.ref('items').on('child_removed', snapshot => {
+            showNotification(`${snapshot.val().name} was removed!`);
+            renderList();
+        });
+    }
+
+    function addItem() {
+        const itemName = document.getElementById('itemInput').value;
+        if (itemName) {
+            database.ref('items').push({
+                name: itemName,
+                addedBy: auth.currentUser.uid
+            });
+            document.getElementById('itemInput').value = '';
+        }
+    }
+
+    function removeItem(key) {
+        database.ref('items').child(key).remove();
+    }
+
+    function renderList() {
+        database.ref('items').once('value').then(snapshot => {
+            const items = snapshot.val() || {};
+            let html = '';
+            Object.keys(items).forEach(key => {
+                html += `<li class="item">${items[key].name} 
+                            <button onclick="removeItem('${key}')">Remove</button>
+                        </li>`;
+                // Check for sales here - this would normally call an API
+                checkSale(items[key].name);
+            });
+            $('#groceryList').html(html);
+        });
+    }
+
+    function showNotification(message) {
+        const notification = $('<div class="notification">' + message + '</div>');
+        $('#notifications').append(notification);
+        notification.fadeIn();
+        setTimeout(() => {
+            notification.fadeOut(() => notification.remove());
+        }, 5000);
+    }
+
+    function checkSale(itemName) {
+        // This is a mock API call. Replace with actual API integration.
+        fetch('https://api.example.com/check-price?item=' + encodeURIComponent(itemName))
+        .then(response => response.json())
+        .then(data => {
+            if (data.onSale) {
+                showNotification(`${itemName} is on sale for $${data.price}!`);
+            }
+        }).catch(error => console.error('Error checking sale:', error));
+    }
+
+    // Initial render
+    renderList();
+</script>
+
+</body>
+</html>
