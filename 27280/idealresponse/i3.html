@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Advanced Grocery List Sync</title>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+    />
+    <style>
+      body {
+        padding: 20px;
+      }
+      .list-item {
+        margin: 5px 0;
+        padding: 10px;
+        border: 1px solid #ccc;
+      }
+      .aisle {
+        font-style: italic;
+        color: #6c757d;
+      }
+      #notifications,
+      #summary {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        width: 300px;
+        z-index: 1000;
+      }
+      .notification,
+      .summary-item {
+        padding: 10px;
+        margin-bottom: 10px;
+        background-color: #f8f9fa;
+        border-left: 4px solid #007bff;
+        box-shadow: 0 5px 8px -6px rgba(0, 0, 0, 0.2);
+      }
+      .notification.success {
+        border-color: #28a745;
+        background-color: #d4edda;
+      }
+      .notification.error {
+        border-color: #dc3545;
+        background-color: #f8d7da;
+      }
+      .summary-item {
+        background-color: #e9ecef;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <h2>Grocery List</h2>
+      <div id="auth">
+        <input id="user" placeholder="Username" />
+        <button onclick="authUser()">Login</button>
+      </div>
+      <div id="groceryApp" style="display: none">
+        <input id="itemName" placeholder="Item Name" />
+        <input id="itemCategory" placeholder="Category" />
+        <input id="itemAisle" placeholder="Aisle" />
+        <input id="itemPrice" placeholder="Price" type="number" step="0.01" />
+        <button onclick="addItem()">Add Item</button>
+        <ul id="groceryList" class="list-group"></ul>
+      </div>
+      <div id="userAssignment" style="display: none">
+        <h3>Assign Items</h3>
+        <select id="userSelector"></select>
+        <button onclick="assignItems()">Assign Selected Items</button>
+      </div>
+      <div id="progressTracker" style="display: none">
+        <h3>Progress Tracker</h3>
+        <div id="userProgress"></div>
+      </div>
+      <div id="summary">
+        <h3>Summary</h3>
+        <div id="totalSummary"></div>
+      </div>
+      <div id="notifications"></div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script>
+      // Initialize Firebase
+      const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_AUTH_DOMAIN",
+        databaseURL: "YOUR_DATABASE_URL",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_STORAGE_BUCKET",
+        messagingSenderId: "YOUR_SENDER_ID",
+        appId: "YOUR_APP_ID",
+      };
+      firebase.initializeApp(firebaseConfig);
+      const database = firebase.database();
+
+      let currentUser = null;
+      let users = {}; // Store users for easy access
+      let assignments = {}; // Store item assignments
+      const notifications = document.getElementById("notifications");
+
+      function authUser() {
+        currentUser = document.getElementById("user").value;
+        if (currentUser) {
+          document.getElementById("auth").style.display = "none";
+          document.getElementById("groceryApp").style.display = "block";
+          loadUsers();
+          showNotification("Logged in successfully!", "success");
+        } else {
+          showNotification("Please enter a username.", "error");
+        }
+      }
+
+      function loadUsers() {
+        database.ref("users").once("value", (snapshot) => {
+          snapshot.forEach((child) => {
+            const userName = child.val();
+            users[child.key] = userName;
+            const option = document.createElement("option");
+            option.value = child.key;
+            option.text = userName;
+            document.getElementById("userSelector").appendChild(option);
+          });
+        });
+      }
+
+      function addItem() {
+        const itemName = document.getElementById("itemName").value;
+        if (!itemName) {
+          showNotification("Item name is required.", "error");
+          return;
+        }
+        const item = {
+          name: itemName,
+          category: document.getElementById("itemCategory").value,
+          aisle: document.getElementById("itemAisle").value,
+          price: document.getElementById("itemPrice").value,
+          user: currentUser,
+          assignedTo: null,
+          purchased: false,
+        };
+        database
+          .ref("items")
+          .push(item)
+          .then(() => {
+            showNotification(
+              `${item.name} was added to the list by ${currentUser}`,
+              "success"
+            );
+          });
+      }
+
+      function removeItem(key) {
+        database
+          .ref("items")
+          .child(key)
+          .once("value", (snapshot) => {
+            const itemName = snapshot.val().name;
+            database
+              .ref("items")
+              .child(key)
+              .remove()
+              .then(() => {
+                showNotification(
+                  `${itemName} was removed from the list`,
+                  "success"
+                );
+              })
+              .catch(() => {
+                showNotification("Error removing item.", "error");
+              });
+          });
+      }
+
+      function showNotification(message, type = "info") {
+        const notification = document.createElement("div");
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        notifications.appendChild(notification);
+        setTimeout(() => {
+          notification.remove();
+        }, 5000);
+      }
+
+      // Listen for added items
+      database.ref("items").on("child_added", (snapshot) => {
+        const item = snapshot.val();
+        if (snapshot.val().user !== currentUser) {
+          showNotification(`${item.name} was added by ${item.user}`, "info");
+        }
+        checkForSale(item);
+        const listItem = `<li class="list-group-item list-item">
+            <input type="checkbox" style="margin-right:10px;">
+            ${item.name} - <span class="aisle">Aisle: ${item.aisle}</span> - 
+            Price: $${item.price} - 
+            Added by: ${item.user}
+            <button onclick="removeItem('${snapshot.key}')">Remove</button>
+        </li>`;
+        document.getElementById("groceryList").innerHTML += listItem;
+        updateProgress();
+        updateSummary();
+      });
+
+      // Listen for removed items
+      database.ref("items").on("child_removed", (snapshot) => {
+        const node = document.querySelector(
+          `[onclick="removeItem('${snapshot.key}')"]`
+        ).parentNode;
+        node.remove();
+        showNotification(
+          `${snapshot.val().name} was removed from the list by ${
+            snapshot.val().user
+          }`,
+          "info"
+        );
+        updateProgress();
+        updateSummary();
+      });
+
+      // Function to assign items
+      function assignItems() {
+        const user = document.getElementById("userSelector").value;
+        const itemsList = document.getElementById("groceryList").children;
+        Array.from(itemsList).forEach((item) => {
+          if (item.querySelector("input[type=checkbox]").checked) {
+            const key = item
+              .querySelector("button")
+              .getAttribute("onclick")
+              .match(/'(.*?)'/)[1];
+            database.ref("items/" + key).update({ assignedTo: user });
+            assignments[key] = user; // Update local assignment
+          }
+        });
+        showNotification("Items assigned successfully", "success");
+        updateProgress();
+        updateSummary();
+      }
+
+      // Function to update progress
+      function updateProgress() {
+        let progress = {};
+        for (let key in assignments) {
+          const item = database.ref("items/" + key);
+          item.once("value", (snapshot) => {
+            const data = snapshot.val();
+            if (data.purchased) {
+              progress[data.assignedTo] = (progress[data.assignedTo] || 0) + 1;
+            }
+          });
+        }
+        // Display progress
+        const userProgress = document.getElementById("userProgress");
+        userProgress.innerHTML = "";
+        for (let user in progress) {
+          userProgress.innerHTML += `<p>${users[user]}: ${progress[user]} items purchased</p>`;
+        }
+      }
+
+      // Function to update summary
+      function updateSummary() {
+        let summary = {};
+        database.ref("items").once("value", (snapshot) => {
+          snapshot.forEach((childSnapshot) => {
+            const item = childSnapshot.val();
+            if (item.purchased) {
+              const user = item.assignedTo || "Unassigned";
+              summary[user] = (summary[user] || 0) + parseFloat(item.price);
+            }
+          });
+          const totalSummary = document.getElementById("totalSummary");
+          totalSummary.innerHTML = "";
+          for (let user in summary) {
+            totalSummary.innerHTML += `<p>Total for ${
+              users[user] || "Unassigned"
+            }: $${summary[user].toFixed(2)}</p>`;
+          }
+        });
+      }
+
+      // Mock API for price comparison - In real scenarios, this would be a call to an actual API
+      function checkForSale(item) {
+        // Simulate a sale event
+        const saleProbability = Math.random();
+        if (saleProbability > 0.8) {
+          // 20% chance of a sale
+          const newPrice = item.price * (0.8 + Math.random() * 0.2); // 80% to 100% of original price
+          showNotification(
+            `${item.name} is on sale! New price: $${newPrice.toFixed(2)}`,
+            "success"
+          );
+        }
+      }
+
+      // Check for sales every 5 minutes
+      setInterval(() => {
+        database
+          .ref("items")
+          .once("value")
+          .then((snapshot) => {
+            snapshot.forEach((childSnapshot) => {
+              checkForSale(childSnapshot.val());
+            });
+          });
+      }, 300000); // 300,000 ms = 5 minutes
+
+      // Trigger updates
+      setInterval(() => {
+        updateProgress();
+        updateSummary();
+      }, 60000); // Update every minute or as needed
+    </script>
+  </body>
+</html>

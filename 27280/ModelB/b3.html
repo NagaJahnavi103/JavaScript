@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collaborative Grocery List with Assignments</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .user-assignment {
+            font-size: 0.8em;
+            font-style: italic;
+            color: #6c757d;
+        }
+        .purchased {
+            text-decoration: line-through;
+        }
+        #summary {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container mt-5">
+    <h2>Grocery List with User Assignments</h2>
+    <div id="auth">
+        <input id="username" placeholder="Enter your name">
+        <button onclick="login()">Login</button>
+    </div>
+    <div id="groceryApp" style="display: none;">
+        <input id="itemInput" placeholder="Add item" class="form-control mb-2">
+        <select id="assignTo" class="form-control mb-2">
+            <!-- User list will be populated here -->
+        </select>
+        <button onclick="addItem()" class="btn btn-primary">Add Item</button>
+        <ul id="groceryList"></ul>
+        <div id="summary">
+            <h5>Shopping Summary:</h5>
+            <ul id="userSummary"></ul>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_AUTH_DOMAIN",
+        databaseURL: "YOUR_DATABASE_URL",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_STORAGE_BUCKET",
+        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    let users = {};
+    let currentUser = null;
+
+    function login() {
+        currentUser = document.getElementById('username').value;
+        if (currentUser) {
+            document.getElementById('auth').style.display = 'none';
+            document.getElementById('groceryApp').style.display = 'block';
+            initApp();
+        }
+    }
+
+    function initApp() {
+        const userRef = database.ref('users');
+        userRef.on('value', snapshot => {
+            users = snapshot.val() || {};
+            populateUserSelect();
+            updateSummary();
+        });
+
+        const itemsRef = database.ref('items');
+        itemsRef.on('value', snapshot => {
+            const items = snapshot.val() || {};
+            displayItems(items);
+        });
+    }
+
+    function populateUserSelect() {
+        const userSelect = document.getElementById('assignTo');
+        userSelect.innerHTML = '<option value="">Assign to...</option>';
+        Object.keys(users).forEach(uid => {
+            const option = document.createElement('option');
+            option.value = uid;
+            option.text = users[uid].name;
+            userSelect.appendChild(option);
+        });
+    }
+
+    function addItem() {
+        const itemInput = document.getElementById('itemInput');
+        const assignTo = document.getElementById('assignTo');
+        const itemName = itemInput.value;
+        const assignedUid = assignTo.value;
+        if (itemName && assignedUid) {
+            database.ref('items').push({
+                name: itemName,
+                assignedTo: assignedUid,
+                purchased: false,
+                price: 0, // Assume price is added later or fetched from an API
+                addedBy: currentUser
+            });
+            itemInput.value = '';
+        }
+    }
+
+    function displayItems(items) {
+        const listHtml = Object.keys(items).map(key => {
+            const item = items[key];
+            const purchasedClass = item.purchased ? 'purchased' : '';
+            return `<li class="${purchasedClass}">
+                        ${item.name} 
+                        <span class="user-assignment">Assigned to: ${users[item.assignedTo] ? users[item.assignedTo].name : 'None'}</span>
+                        <button onclick="togglePurchased('${key}', !item.purchased)">Toggle Purchased</button>
+                    </li>`;
+        }).join('');
+        document.getElementById('groceryList').innerHTML = listHtml;
+    }
+
+    function togglePurchased(key, purchased) {
+        database.ref('items').child(key).update({ purchased: purchased });
+    }
+
+    function updateSummary() {
+        const userSummaryHtml = Object.keys(users).map(uid => {
+            const userItems = Object.values(users[uid].items || {});
+            const purchasedItems = userItems.filter(item => item.purchased);
+            const totalCost = purchasedItems.reduce((sum, item) => sum + (item.price || 0), 0);
+            return `<li>${users[uid].name}: ${purchasedItems.length} items purchased, Total cost: $${totalCost}</li>`;
+        }).join('');
+        document.getElementById('userSummary').innerHTML = userSummaryHtml;
+    }
+</script>
+
+</body>
+</html>
