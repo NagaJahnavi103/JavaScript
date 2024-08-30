@@ -3,57 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Educational Platform</title>
+    <title>Animal Quiz</title>
     <style>
-        body { font-family: 'Arial', sans-serif; }
-        .subject-list, .lesson-list { list-style: none; padding: 0; }
-        .subject-list li, .lesson-list li { padding: 10px; border-bottom: 1px solid #ccc; }
-        .subject-list li:hover, .lesson-list li:hover { background-color: #f0f0f0; }
-        .content { max-width: 800px; margin: auto; }
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .quiz-container {
+            width: 80%;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #3e8e41;
+        }
+        .feedback {
+            color: #666;
+            font-size: 0.9em;
+        }
     </style>
 </head>
 <body>
-    <div class="content">
-        <h1>Educational Platform</h1>
-        <h2>Subjects</h2>
-        <ul class="subject-list" id="subjectList">
-            <!-- Dynamically loaded -->
-        </ul>
+    <div class="quiz-container">
+        <h2 id="question-text"></h2>
+        <div id="options"></div>
+        <button onclick="prevQuestion()">Previous</button>
+        <button onclick="nextQuestion()">Next</button>
+        <p class="feedback" id="feedback"></p>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const subjects = [
-                { name: "Mathematics", lessons: ["Algebra", "Geometry", "Calculus"] },
-                { name: "Physics", lessons: ["Mechanics", "Electromagnetism", "Quantum Physics"] },
-                { name: "Computer Science", lessons: ["Algorithms", "Data Structures", "Web Development"] }
-            ];
+        const questions = [
+            {
+                question: "Which animal is known as the 'Ship of the Desert'?",
+                answers: ["Camel", "Horse", "Donkey", "Elephant"],
+                correct: 0
+            },
+            {
+                question: "What is the largest living species of lizard?",
+                answers: ["Komodo Dragon", "Saltwater Crocodile", "Black Mamba", "African Elephant"],
+                correct: 0
+            },
+            // Add more questions here
+        ];
 
-            const subjectListElement = document.getElementById('subjectList');
-            subjects.forEach(subject => {
-                const subjectElement = document.createElement('li');
-                subjectElement.textContent = subject.name;
-                subjectElement.onclick = () => showSubjectDetail(subject);
-                subjectListElement.appendChild(subjectElement);
-            });
+        let currentQuestionIndex = 0;
 
-            function showSubjectDetail(subject) {
-                const contentDiv = document.querySelector('.content');
-                contentDiv.innerHTML = `
-                    <h2>${subject.name}</h2>
-                    <p>Welcome to ${subject.name}. Here you can find various resources to learn from.</p>
-                    <h3>Lessons:</h3>
-                    <ul class="lesson-list">
-                        ${subject.lessons.map(lesson => `<li>${lesson}</li>`).join('')}
-                    </ul>
-                    <button onclick="goBack()">Back to Subjects</button>
-                `;
+        function displayQuestion() {
+            const currentQuestion = questions[currentQuestionIndex];
+            document.getElementById('question-text').textContent = currentQuestion.question;
+            const optionsHtml = currentQuestion.answers.map((answer, index) => {
+                return `<input type="radio" name="answer" value="${index}">${answer}<br>`;
+            }).join('');
+            document.getElementById('options').innerHTML = optionsHtml;
+        }
+
+        function checkAnswer() {
+            const selectedAnswer = document.querySelector('input[name="answer"]:checked');
+            if (selectedAnswer) {
+                const userAnswerIndex = Number(selectedAnswer.value);
+                const correctAnswerIndex = questions[currentQuestionIndex].correct;
+                if (userAnswerIndex === correctAnswerIndex) {
+                    document.getElementById('feedback').textContent = "Correct!";
+                } else {
+                    document.getElementById('feedback').textContent = `Incorrect. The correct answer is ${questions[currentQuestionIndex].answers[correctAnswerIndex]}.`;
+                }
             }
+        }
 
-            function goBack() {
-                location.reload(); // Simplistic approach for demo. Ideally, manage state better.
+        function nextQuestion() {
+            checkAnswer();
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                displayQuestion();
             }
-        });
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                displayQuestion();
+            }
+        }
+
+        displayQuestion();
     </script>
 </body>
 </html>

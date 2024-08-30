@@ -3,21 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Educational Platform</title>
-    <link rel="stylesheet" href="a1.css">
-    <!-- CDN for p5.js if needed -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <title>Animal Quiz</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        #quiz-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 80%;
+            max-width: 600px;
+        }
+        .question {
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+        .answer {
+            display: block;
+            margin: 10px 0;
+            padding: 10px;
+            background: #eee;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .answer:hover {
+            background: #ddd;
+        }
+        .controls {
+            text-align: center;
+        }
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #feedback {
+            color: green;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .correct {
+            background: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .incorrect {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <h1>EduLearn</h1>
-    </header>
-    <nav>
-        <ul id="subjectList"></ul>
-    </nav>
-    <main id="contentArea">
-        <!-- Content will be dynamically loaded here -->
-    </main>
-    <script src="a1.js"></script>
+
+<div id="quiz-container">
+    <div id="question"></div>
+    <div id="answers"></div>
+    <div class="controls">
+        <button id="prev">Previous</button>
+        <button id="next">Next</button>
+    </div>
+    <div id="feedback"></div>
+</div>
+
+<script>
+    const quiz = [
+        { question: "Which animal is known as the 'King of the Jungle'?", 
+          answers: ["Elephant", "Lion", "Tiger", "Leopard"], 
+          correct: 1 },
+        { question: "What do you call a group of crows?", 
+          answers: ["A murder", "A pack", "A herd", "A school"], 
+          correct: 0 },
+        // Add more questions here
+    ];
+
+    let currentQuestion = 0;
+    const questionElement = document.getElementById('question');
+    const answersElement = document.getElementById('answers');
+    const feedbackElement = document.getElementById('feedback');
+    const prevButton = document.getElementById('prev');
+    const nextButton = document.getElementById('next');
+
+    function showQuestion() {
+        let q = quiz[currentQuestion];
+        questionElement.textContent = q.question;
+        answersElement.innerHTML = '';
+        q.answers.forEach((answer, index) => {
+            const answerDiv = document.createElement('div');
+            answerDiv.className = 'answer';
+            answerDiv.textContent = answer;
+            answerDiv.onclick = () => selectAnswer(index);
+            answersElement.appendChild(answerDiv);
+        });
+    }
+
+    function selectAnswer(index) {
+        let correctIndex = quiz[currentQuestion].correct;
+        feedbackElement.textContent = index === correctIndex ? "Correct!" : "Incorrect!";
+        Array.from(answersElement.children).forEach((answer, i) => {
+            if (i === correctIndex) answer.classList.add('correct');
+            if (i === index && index !== correctIndex) answer.classList.add('incorrect');
+        });
+    }
+
+    prevButton.onclick = function() {
+        if (currentQuestion > 0) {
+            currentQuestion--;
+            showQuestion();
+            feedbackElement.textContent = '';
+        }
+    };
+
+    nextButton.onclick = function() {
+        if (currentQuestion < quiz.length - 1) {
+            currentQuestion++;
+            showQuestion();
+            feedbackElement.textContent = '';
+        }
+    };
+
+    showQuestion();
+</script>
+
 </body>
 </html>

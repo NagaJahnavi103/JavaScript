@@ -1,23 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Educational Platform</title>
-    <link rel="stylesheet" href="i1.css">
-    <!-- CDN for p5.js if needed -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
-</head>
-<body>
-    <header>
-        <h1>EduLearn</h1>
-    </header>
-    <nav>
-        <ul id="subjectList"></ul>
-    </nav>
-    <main id="contentArea">
-        <!-- Content will be dynamically loaded here -->
-    </main>
-    <script src="i1.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Animal Quiz</title>
+    <style>
+      body {
+        font-family: "Arial", sans-serif;
+        background-color: #f0f8ff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+      }
+      #quiz-container {
+        background: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        width: 300px;
+      }
+      .question {
+        margin-bottom: 20px;
+        font-weight: bold;
+      }
+      .answer {
+        margin: 10px 0;
+        padding: 10px;
+        border: 1px solid #ddd;
+        cursor: pointer;
+        border-radius: 5px;
+        transition: background-color 0.3s;
+      }
+      .answer:hover {
+        background-color: #f5f5f5;
+      }
+      .selected {
+        background-color: #e6f3ff;
+      }
+      .correct {
+        background-color: #d4edda;
+      }
+      .incorrect {
+        background-color: #f8d7da;
+      }
+      .controls {
+        display: flex;
+        justify-content: space-between;
+      }
+      button {
+        padding: 10px 15px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="quiz-container">
+      <div id="question"></div>
+      <div id="answers"></div>
+      <div id="feedback"></div>
+      <div class="controls">
+        <button id="prev">Previous</button>
+        <button id="next">Next</button>
+      </div>
+    </div>
+
+    <script>
+      const quiz = {
+        // Array containing the quiz questions, answers, and the index of the correct answer
+        questions: [
+          {
+            q: "Which animal is known as the 'King of the Jungle'?",
+            a: ["Elephant", "Lion", "Tiger", "Leopard"],
+            correct: 1,
+          },
+          {
+            q: "What do you call a group of crows?",
+            a: ["A murder", "A pack", "A herd", "A school"],
+            correct: 0,
+          },
+          {
+            q: "Which animal has the longest lifespan?",
+            a: ["Elephant", "Blue Whale", "Giant Tortoise", "Human"],
+            correct: 2,
+          },
+        ],
+        currentQuestion: 0, // Index to track the current question being displayed
+
+        // Method to display the current question and its possible answers
+        showQuestion: function () {
+          // Get the current question object
+          const q = this.questions[this.currentQuestion];
+
+          // Display the question text
+          document.getElementById("question").textContent = q.q;
+
+          // Get the div where answers will be displayed
+          const answersDiv = document.getElementById("answers");
+          answersDiv.innerHTML = ""; // Clear any previous answers
+
+          // Loop through each answer and create a div element for it
+          q.a.forEach((answer, index) => {
+            const div = document.createElement("div");
+            div.className = "answer";
+            div.textContent = answer;
+
+            // Add click event listener to each answer div
+            div.onclick = () => this.selectAnswer(index);
+
+            // Append the answer div to the answers container
+            answersDiv.appendChild(div);
+          });
+        },
+
+        // Method to handle answer selection
+        selectAnswer: function (answerIndex) {
+          const feedbackDiv = document.getElementById("feedback");
+
+          // Check if the selected answer is correct
+          if (answerIndex === this.questions[this.currentQuestion].correct) {
+            feedbackDiv.textContent = "Correct!";
+            document
+              .querySelectorAll(".answer")
+              [answerIndex].classList.add("correct");
+          } else {
+            feedbackDiv.textContent = "Incorrect. Try again!";
+            document
+              .querySelectorAll(".answer")
+              [answerIndex].classList.add("incorrect");
+          }
+
+          // Disable further clicking on the answers once an answer is selected
+          Array.from(document.querySelectorAll(".answer")).forEach(
+            (el, idx) => {
+              if (idx === this.questions[this.currentQuestion].correct) {
+                el.classList.add("correct");
+              }
+              el.onclick = null;
+            }
+          );
+        },
+
+        // Method to show the next question
+        nextQuestion: function () {
+          if (this.currentQuestion < this.questions.length - 1) {
+            this.currentQuestion++; // Increment the current question index
+            this.showQuestion(); // Display the next question
+            this.resetFeedback(); // Reset feedback and answer styles
+          }
+        },
+
+        // Method to show the previous question
+        prevQuestion: function () {
+          if (this.currentQuestion > 0) {
+            this.currentQuestion--; // Decrement the current question index
+            this.showQuestion(); // Display the previous question
+            this.resetFeedback(); // Reset feedback and answer styles
+          }
+        },
+
+        // Method to reset feedback and answer styles when navigating between questions
+        resetFeedback: function () {
+          document.getElementById("feedback").textContent = ""; // Clear the feedback message
+          document.querySelectorAll(".answer").forEach((el) => {
+            // Remove any previous correct/incorrect classes
+            el.classList.remove("correct", "incorrect");
+
+            // Re-enable answer selection
+            el.onclick = () =>
+              this.selectAnswer(Array.from(el.parentNode.children).indexOf(el));
+          });
+        },
+      };
+
+      // Event listener for the "Next" button to move to the next question
+      document
+        .getElementById("next")
+        .addEventListener("click", () => quiz.nextQuestion());
+
+      // Event listener for the "Previous" button to move to the previous question
+      document
+        .getElementById("prev")
+        .addEventListener("click", () => quiz.prevQuestion());
+
+      // Display the first question when the page loads
+      quiz.showQuestion();
+    </script>
+  </body>
 </html>
