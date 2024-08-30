@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collaborative Grocery List</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        #groceryList { list-style-type: none; padding: 0; }
+        .item { padding: 10px; border-bottom: 1px solid #eee; }
+        .item button { margin-left: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container mt-5">
+    <h2>Grocery List</h2>
+    <div id="auth"></div>
+    <input type="text" id="itemInput" placeholder="Add item" class="form-control mb-2">
+    <button onclick="addItem()" class="btn btn-primary">Add Item</button>
+    <ul id="groceryList"></ul>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script>
+    // Firebase configuration
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_AUTH_DOMAIN",
+        databaseURL: "YOUR_DATABASE_URL",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_STORAGE_BUCKET",
+        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const auth = firebase.auth();
+
+    // Authentication
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            loadList();
+        } else {
+            firebase.auth().signInAnonymously().catch(console.error);
+        }
+    });
+
+    function addItem() {
+        const item = document.getElementById('itemInput').value;
+        if (item) {
+            database.ref('items').push({
+                name: item,
+                addedBy: auth.currentUser.uid,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+            document.getElementById('itemInput').value = '';
+        }
+    }
+
+    function loadList() {
+        database.ref('items').on('value', snapshot => {
+            const items = snapshot.val() || {};
+            let html = '';
+            Object.keys(items).forEach(key => {
+                html += `<li class="item">${items[key].name} 
+                            <button onclick="removeItem('${key}')">Remove</button>
+                        </li>`;
+            });
+            $('#groceryList').html(html);
+        });
+    }
+
+    function removeItem(key) {
+        database.ref('items').child(key).remove();
+    }
+
+    // TODO: Implement categorization, aisle mapping, price comparison, and notifications
+</script>
+
+</body>
+</html>

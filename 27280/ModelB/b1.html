@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grocery List Collaborator</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+    <style>
+        body { padding: 20px; }
+        .item { display: flex; justify-content: space-between; align-items: center; }
+        .item button { margin-left: 10px; }
+        #notifications { position: fixed; top: 10px; right: 10px; }
+    </style>
+</head>
+<body>
+    <section class="hero is-info">
+        <div class="hero-body">
+            <p class="title">Collaborative Grocery List</p>
+        </div>
+    </section>
+    <div class="container">
+        <div id="notifications"></div>
+        <input id="itemInput" class="input" type="text" placeholder="Add new item">
+        <button class="button is-link" onclick="addItem()">Add Item</button>
+        <div id="groceryList"></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSy...your-api-key...",
+            authDomain: "grocery-collab.firebaseapp.com",
+            databaseURL: "https://grocery-collab-default-rtdb.firebaseio.com",
+            projectId: "grocery-collab",
+            storageBucket: "grocery-collab.appspot.com",
+            messagingSenderId: "1234567890",
+            appId: "1:1234567890:web:abc123"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const groceryRef = db.ref('groceryList');
+
+        function addItem() {
+            const itemName = document.getElementById('itemInput').value.trim();
+            if (itemName) {
+                groceryRef.push({
+                    name: itemName,
+                    aisle: 'Uncategorized',
+                    store: 'Not specified',
+                    price: 0
+                });
+                document.getElementById('itemInput').value = '';
+            }
+        }
+
+        groceryRef.on('child_added', (snapshot) => {
+            displayItem(snapshot);
+        });
+
+        groceryRef.on('child_changed', (snapshot) => {
+            updateItem(snapshot);
+        });
+
+        groceryRef.on('child_removed', (oldSnapshot) => {
+            removeItem(oldSnapshot.key);
+        });
+
+        function displayItem(snapshot) {
+            const item = snapshot.val();
+            const itemHTML = `
+                <div class="item" data-key="${snapshot.key}">
+                    <span>${item.name}</span>
+                    <button class="delete" onclick="removeItem('${snapshot.key}')">X</button>
+                </div>
+            `;
+            $('#groceryList').append(itemHTML);
+        }
+
+        function removeItem(key) {
+            db.ref(`groceryList/${key}`).remove();
+        }
+
+        function updateItem(snapshot) {
+            const itemElement = $(`.item[data-key="${snapshot.key}"]`);
+            if (itemElement) {
+                itemElement.find('span').text(snapshot.val().name);
+            }
+        }
+    </script>
+</body>
+</html>
