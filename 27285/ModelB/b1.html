@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Wardrobe Planner</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body { font-family: 'Arial', sans-serif; }
+        #wardrobe, #planner { border: 1px solid #ddd; padding: 15px; margin: 10px 0; }
+        .item, .planned-item { padding: 10px; margin: 5px; background: #f8f9fa; cursor: move; }
+        .item { border: 1px solid #ccc; }
+        .planned-item { border: 2px dashed #007bff; }
+        .day { min-height: 150px; border: 1px solid #eee; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Virtual Wardrobe Planner</h2>
+    <div id="wardrobe">
+        <h4>Wardrobe</h4>
+        <div class="row" id="wardrobeItems"></div>
+    </div>
+    <div id="planner">
+        <h4>Weekly Planner</h4>
+        <div class="row" id="calendar"></div>
+    </div>
+    <div id="weather"></div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/interactjs@1.10.11/dist/interact.min.js"></script>
+<script>
+    // Initialize interact.js for drag and drop
+    interact('.item').draggable({
+        inertia: true,
+        autoScroll: true,
+        onmove: dragMoveListener,
+    }).dropzone({
+        accept: '.day',
+        ondrop: function (event) {
+            let item = event.relatedTarget;
+            let day = event.target.getAttribute('data-day');
+            item.setAttribute('data-day', day);
+            item.classList.remove('item');
+            item.classList.add('planned-item');
+        }
+    });
+
+    function dragMoveListener (event) {
+        var target = event.target,
+            x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx,
+            y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+        target.style.webkitTransform =
+        target.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
+
+        target.setAttribute('data-x', x);
+        target.setAttribute('data-y', y);
+    }
+
+    // Sample data - this would typically come from a user's database or input
+    const wardrobeItems = [
+        {type: 'top', name: 'White Shirt', image: 'shirt.png'},
+        {type: 'bottom', name: 'Blue Jeans', image: 'jeans.png'},
+        // Add more items...
+    ];
+
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+    // Populate wardrobe and planner
+    document.addEventListener('DOMContentLoaded', function() {
+        wardrobeItems.forEach(item => {
+            let itemDiv = document.createElement('div');
+            itemDiv.className = 'col-3 item';
+            itemDiv.innerHTML = `<img src="${item.image}" alt="${item.name}" style="width:50px;"> ${item.name}`;
+            document.getElementById('wardrobeItems').appendChild(itemDiv);
+        });
+
+        days.forEach(day => {
+            let dayDiv = document.createElement('div');
+            dayDiv.className = 'col day';
+            dayDiv.setAttribute('data-day', day);
+            dayDiv.innerHTML = `<h5>${day}</h5>`;
+            document.getElementById('calendar').appendChild(dayDiv);
+        });
+
+        // Here you would fetch weather data and display it
+        // fetchWeatherData();
+    });
+
+    // Function to fetch weather would go here, using an API like OpenWeatherMap
+</script>
+
+</body>
+</html>
