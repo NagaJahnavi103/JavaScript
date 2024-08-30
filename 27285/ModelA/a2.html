@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enhanced Weekly Outfit Planner</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/5.10.2/main.min.css" />
+<style>
+    /* Previous styles remain mostly the same */
+    .weather-suggestions { margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <!-- UI elements remain mostly unchanged -->
+    <div class="row">
+        <!-- Wardrobe and Planning sections -->
+    </div>
+    <div class="forecast" id="weather-forecast">
+        <p>Loading weather forecast...</p>
+        <div class="weather-suggestions">
+            <h6>Outfit Suggestions:</h6>
+            <ul id="outfit-suggestions">
+                <!-- Dynamically generated outfit suggestions will be listed here -->
+            </ul>
+        </div>
+    </div>
+    <div class="calendar-view" id="calendar-view"></div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/5.10.2/main.min.js"></script>
+<script>
+    $(document).ready(function() {
+        const API_KEY = "your_openweathermap_api_key";
+        const lat = 37.7749; // Example latitude
+        const lon = -122.4194; // Example longitude
+
+        // Fetch weather data
+        function fetchWeatherData() {
+            $.getJSON(`https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=imperial`, function(data) {
+                const dailyForecast = data.daily[0];
+                updateWeatherUI(dailyForecast);
+            });
+        }
+
+        // Update UI with weather data
+        function updateWeatherUI(data) {
+            const weatherDesc = data.weather[0].description;
+            $("#weather-forecast p").html(`Today's forecast: ${weatherDesc}.`);
+            updateOutfitSuggestions(weatherDesc);
+        }
+
+        // Suggest outfits based on weather
+        function updateOutfitSuggestions(weather) {
+            const suggestions = {
+                "clear sky": ["Light tops", "Shorts", "Sandals"],
+                "rain": ["Raincoat", "Boots", "Umbrella"],
+                // Add more conditions as needed
+            };
+            const outfitList = suggestions[weather] || ["Check your wardrobe for suggestions"];
+            $("#outfit-suggestions").html(outfitList.map(item => `<li>${item}</li>`).join(''));
+        }
+
+        // Initialize and render Calendar
+        var calendarEl = document.getElementById('calendar-view');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridWeek',
+            events: loadEventsFromStorage,
+            eventDrop: saveEvent,
+            eventResize: saveEvent,
+            eventClick: function(info) {
+                // Optionally, show outfit details or edit
+            }
+        });
+        calendar.render();
+
+        // Save event to local storage
+        function saveEvent(info) {
+            const events = JSON.parse(localStorage.getItem('outfits') || '[]');
+            events.push({
+                title: 'Outfit',
+                start: info.event.start,
+                allDay: true
+            });
+            localStorage.setItem('outfits', JSON.stringify(events));
+        }
+
+        // Load events from local storage
+        function loadEventsFromStorage() {
+            return JSON.parse(localStorage.getItem('outfits') || '[]');
+        }
+
+        fetchWeatherData();
+        setInterval(fetchWeatherData, 3600000); // Update weather every hour
+    });
+</script>
+
+</body>
+</html>

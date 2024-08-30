@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Wardrobe</title>
+    <!-- Include jQuery via CDN -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Include FullCalendar via CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .wardrobe, .outfit-assembly, .weather-suggestions {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 20px;
+            width: 80%;
+            min-height: 150px;
+        }
+        .wardrobe .category {
+            margin-bottom: 10px;
+        }
+        .wardrobe .item {
+            display: inline-block;
+            padding: 10px;
+            margin: 5px;
+            background-color: #f0f0f0;
+            cursor: grab;
+        }
+        .outfit-assembly {
+            border: 2px dashed #ccc;
+            display: flex;
+            justify-content: space-around;
+        }
+        .calendar {
+            width: 80%;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Virtual Wardrobe</h1>
+
+    <!-- Wardrobe Section -->
+    <div class="wardrobe">
+        <h3>Wardrobe</h3>
+        <div class="category" data-category="tops">
+            <h4>Tops</h4>
+            <div class="item" data-item="shirt">Shirt</div>
+            <div class="item" data-item="tshirt">T-Shirt</div>
+        </div>
+        <div class="category" data-category="bottoms">
+            <h4>Bottoms</h4>
+            <div class="item" data-item="jeans">Jeans</div>
+            <div class="item" data-item="shorts">Shorts</div>
+        </div>
+        <div class="category" data-category="accessories">
+            <h4>Accessories</h4>
+            <div class="item" data-item="hat">Hat</div>
+            <div class="item" data-item="watch">Watch</div>
+        </div>
+    </div>
+
+    <!-- Outfit Assembly Area -->
+    <div class="outfit-assembly">
+        <h3>Drag items here to create an outfit</h3>
+    </div>
+
+    <!-- Weather-based Outfit Suggestions -->
+    <div class="weather-suggestions">
+        <h3>Suggested Outfits Based on Weather</h3>
+        <div class="suggestion">Loading...</div>
+    </div>
+
+    <!-- Calendar View -->
+    <div class="calendar" id="calendar"></div>
+
+    <script>
+        $(document).ready(function() {
+            // Make wardrobe items draggable
+            $(".item").draggable({
+                helper: "clone",
+                revert: "invalid"
+            });
+
+            // Make outfit assembly area droppable
+            $(".outfit-assembly").droppable({
+                accept: ".item",
+                drop: function(event, ui) {
+                    let item = ui.helper.clone();
+                    item.css("cursor", "default");
+                    $(this).append(item);
+                }
+            });
+
+            // Initialize FullCalendar
+            var calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+                initialView: 'dayGridWeek',
+                editable: true,
+                droppable: true,
+                drop: function(info) {
+                    // Remove the item from the assembly area
+                    info.draggedEl.remove();
+                }
+            });
+            calendar.render();
+
+            // Fetch weather data and suggest outfits
+            function updateWeatherSuggestions() {
+                // Replace with a valid API key
+                const apiKey = 'YOUR_OPENWEATHERMAP_API_KEY';
+                const city = 'New York';
+                const apiUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}`;
+
+                $.getJSON(apiUrl, function(data) {
+                    let forecast = data.list[0]; // Get weather for the next available time slot
+                    let temp = forecast.main.temp - 273.15; // Convert from Kelvin to Celsius
+                    let description = forecast.weather[0].description;
+
+                    // Suggest outfit based on temperature
+                    let suggestion = '';
+                    if (temp > 25) {
+                        suggestion = 'It\'s warm! Consider a T-Shirt and Shorts.';
+                    } else if (temp > 15) {
+                        suggestion = 'Mild weather. A Shirt and Jeans would be perfect.';
+                    } else {
+                        suggestion = 'It\'s cold. You might need a Jacket and long Pants.';
+                    }
+
+                    $(".suggestion").text(`${suggestion} (${description})`);
+                });
+            }
+
+            updateWeatherSuggestions();
+        });
+    </script>
+
+</body>
+</html>
