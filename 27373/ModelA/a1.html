@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Mood Journal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+    <style>
+        body { font-family: 'Arial', sans-serif; background: #f4f4f9; }
+        .journal {
+            max-width: 600px;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .emoji-select, .tag-section, .reflection, .graph-section {
+            margin: 15px 0;
+        }
+        .emoji {
+            font-size: 30px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .tag {
+            background: #e0e0e0;
+            padding: 5px 10px;
+            border-radius: 15px;
+            margin: 5px;
+            display: inline-block;
+            cursor: pointer;
+        }
+        #moodGraph {
+            width: 100%;
+            height: 200px;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        @media (max-width: 768px) {
+            .journal { width: 90%; }
+        }
+    </style>
+</head>
+<body>
+<div class="journal">
+    <h2>Daily Mood Journal</h2>
+    <div class="emoji-select">
+        <span class="emoji" onclick="selectMood('😃')">😃</span>
+        <span class="emoji" onclick="selectMood('😐')">😐</span>
+        <span class="emoji" onclick="selectMood('😢')">😢</span>
+    </div>
+    <div class="tag-section">
+        <input id="tagInput" placeholder="Add a tag" onkeyup="if(event.key === 'Enter') addTag()">
+        <div id="tags"></div>
+    </div>
+    <div class="reflection">
+        <textarea id="dailyReflection" placeholder="Write about your day..."></textarea>
+    </div>
+    <div class="graph-section">
+        <canvas id="moodGraph"></canvas>
+    </div>
+    <button onclick="saveEntry()">Save Entry</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let moodEntries = JSON.parse(localStorage.getItem('moodEntries') || '[]');
+    let selectedMood = '';
+    let selectedTags = [];
+
+    function selectMood(emoji) {
+        selectedMood = emoji;
+    }
+
+    function addTag() {
+        const tagInput = document.getElementById('tagInput');
+        if (tagInput.value) {
+            selectedTags.push(tagInput.value);
+            renderTags();
+            tagInput.value = '';
+        }
+    }
+
+    function renderTags() {
+        const tagsDiv = document.getElementById('tags');
+        tagsDiv.innerHTML = selectedTags.map(tag => `<span class="tag" onclick="removeTag('${tag}')">${tag}</span>`).join('');
+    }
+
+    function removeTag(tag) {
+        selectedTags = selectedTags.filter(t => t !== tag);
+        renderTags();
+    }
+
+    function saveEntry() {
+        const reflection = document.getElementById('dailyReflection').value;
+        if (selectedMood) {
+            moodEntries.push({mood: selectedMood, tags: selectedTags, reflection: reflection, date: new Date().toISOString().split('T')[0]});
+            localStorage.setItem('moodEntries', JSON.stringify(moodEntries));
+            updateGraph();
+            // Reset selections
+            selectedMood = '';
+            selectedTags = [];
+            renderTags();
+            document.getElementById('dailyReflection').value = '';
+        }
+    }
+
+    function updateGraph() {
+        const ctx = document.getElementById('moodGraph').getContext('2d');
+        const moodData = moodEntries.map(entry => entry.mood);
+        const labels = moodEntries.map(entry => entry.date);
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Mood Trend',
+                    data: moodData.map(mood => ['😃', '😐', '😢'].indexOf(mood)),
+                    borderColor: 'blue',
+                    fill: false
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 2,
+                        ticks: {
+                            callback: function(value) {
+                                return ['😃', '😐', '😢'][value];
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    updateGraph();
+</script>
+</body>
+</html>

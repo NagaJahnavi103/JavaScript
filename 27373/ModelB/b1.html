@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Mood Journal</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+    <style>
+        .mood-container {
+            max-width: 500px;
+            margin: 40px auto;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .emoji-button {
+            font-size: 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .tag {
+            background-color: #eee;
+            padding: 5px 10px;
+            border-radius: 15px;
+            margin: 5px;
+        }
+        #moodGraph {
+            width: 100%;
+            height: 200px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="mood-container">
+        <h1 class="title">Daily Mood Journal</h1>
+        <div class="emoji-container">
+            <button class="emoji-button">😊</button>
+            <button class="emoji-button">😐</button>
+            <button class="emoji-button">☹️</button>
+            <!-- More emojis can be added -->
+        </div>
+        <div class="tags-container">
+            <input type="text" id="tagInput" placeholder="Add a tag...">
+            <button onclick="addTag()">Add Tag</button>
+            <div id="tagsDisplay"></div>
+        </div>
+        <textarea class="textarea" id="reflection" placeholder="Write about your day..."></textarea>
+        <button onclick="saveEntry()">Save Entry</button>
+        <div id="moodGraph"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let moods = [];
+        let tags = [];
+
+        function addTag() {
+            const tagInput = document.getElementById('tagInput');
+            const tagText = tagInput.value.trim();
+            if (tagText) {
+                tags.push(tagText);
+                updateTagsDisplay();
+                tagInput.value = '';
+            }
+        }
+
+        function updateTagsDisplay() {
+            const tagsDisplay = document.getElementById('tagsDisplay');
+            tagsDisplay.innerHTML = tags.map(tag => `<span class="tag">${tag}</span>`).join('');
+        }
+
+        function saveEntry() {
+            const selectedEmoji = document.querySelector('.emoji-button.selected');
+            const reflection = document.getElementById('reflection').value;
+            const date = new Date().toLocaleDateString();
+            if (selectedEmoji) {
+                const moodEntry = { date, mood: selectedEmoji.textContent, reflection, tags };
+                moods.push(moodEntry);
+                updateMoodGraph();
+                // Save to storage
+                localStorage.setItem('moodJournal', JSON.stringify(moods));
+            }
+        }
+
+        function updateMoodGraph() {
+            const ctx = document.getElementById('moodGraph').getContext('2d');
+            const moodLabels = moods.map(entry => entry.date);
+            const moodData = moods.map(entry => entry.mood);
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: moodLabels,
+                    datasets: [{
+                        label: 'Mood Trend',
+                        data: moodData,
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            ticks: {
+                                callback: function(value, index, values) {
+                                    return ['☹️', '😐', '😊'][index];
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initial setup for emoji selection
+        document.querySelectorAll('.emoji-button').forEach(button => {
+            button.addEventListener('click', function() {
+                document.querySelector('.emoji-button.selected')?.classList.remove('selected');
+                this.classList.add('selected');
+            });
+        });
+
+        // Load previous entries if any
+        const storedMoods = localStorage.getItem('moodJournal');
+        if (storedMoods) {
+            moods = JSON.parse(storedMoods);
+            updateMoodGraph();
+        }
+    </script>
+</body>
+</html>
