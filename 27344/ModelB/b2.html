@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donation Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f9;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .button {
+            padding: 10px 20px;
+            background-color: #76c7c0;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin: 10px 0;
+        }
+        .button:hover {
+            background-color: #5a9c98;
+        }
+        .fundraising-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            background-color: #fafafa;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .fundraising-item:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .fundraising-item img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            margin-right: 10px;
+            border-radius: 5px;
+        }
+        .fundraising-details {
+            flex-grow: 1;
+            cursor: pointer;
+        }
+        .progress-bar {
+            height: 20px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .progress {
+            height: 100%;
+            background-color: #76c7c0;
+            width: 0%;
+            border-radius: 10px;
+            transition: width 0.3s;
+        }
+        .details-container {
+            display: flex;
+        }
+        .details-content {
+            flex-grow: 1;
+        }
+        .leaderboard {
+            width: 200px;
+            margin-left: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+        .leaderboard h2 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .leaderboard p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #555;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .modal-content input, 
+        .modal-content textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        #filterButton {
+            margin-left: 10px;
+        }
+        .toast {
+            visibility: hidden;
+            min-width: 250px;
+            margin-left: -125px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 2px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1;
+            left: 50%;
+            bottom: 30px;
+        }
+        .toast.show {
+            visibility: visible;
+            animation: fadein 0.5s, fadeout 0.5s 4.5s;
+        }
+        @keyframes fadein {
+            from {bottom: 0; opacity: 0;}
+            to {bottom: 30px; opacity: 1;}
+        }
+        @keyframes fadeout {
+            from {bottom: 30px; opacity: 1;}
+            to {bottom: 0; opacity: 0;}
+        }
+    </style>
+</head>
+<body>
+    <div id="addFundraiserModal" class="modal">
+        <!-- Modal content for adding a fundraiser -->
+    </div>
+    
+    <div id="contributionModal" class="modal">
+        <!-- Modal content for making a contribution -->
+    </div>
+
+    <div id="content" class="container">
+        <!-- Content will be dynamically populated here -->
+    </div>
+
+    <div id="toast" class="toast">Contribution added successfully!</div>
+
+    <script>
+        let fundraisers = [];
+        let currentFundraiserIndex = null;
+        let view = 'list';
+        let showAll = false; // To control whether to show all or only those not yet completed
+
+        // Functions to show/hide modals, add fundraisers, make contributions, etc., would be here
+        // They remain largely the same as before with some enhancements:
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = "toast show";
+            setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 5000);
+        }
+
+        function toggleFilter() {
+            showAll = !showAll;
+            document.getElementById('filterButton').textContent = showAll ? 'Show Incomplete' : 'Show All';
+            renderFundraisers();
+        }
+
+        function render() {
+            // This function now includes rendering the percentage next to the progress bar
+            // and adding a contribution button in the detail view
+            if (view === 'detail') {
+                const fundraiser = fundraisers[currentFundraiserIndex];
+                const progressPercent = Math.min((fundraiser.raised / fundraiser.goal) * 100, 100);
+                document.getElementById('content').innerHTML = `
+                    <button class="button" onclick="goBack()">Back</button>
+                    <h1>${fundraiser.name}</h1>
+                    <div class="progress-bar">
+                        <div class="progress" style="width: ${progressPercent}%;"></div>
+                    </div>
+                    <p>${Math.round(progressPercent)}% funded</p>
+                    <img src="${fundraiser.image}" alt="${fundraiser.name}" style="width: 100%; max-height: 300px; object-fit: cover; border-radius: 10px;">
+                    <p>${fundraiser.description}</p>
+                    <button class="button" onclick="showContributionModal(${currentFundraiserIndex})">Contribute</button>
+                    <!-- Leaderboard and other details -->
+                `;
+            }
+            renderFundraisers(); // Always render fundraisers to reflect filter changes
+        }
+
+        function renderFundraisers() {
+            const list = document.getElementById('fundraising-list');
+            list.innerHTML = '';
+            const filteredFundraisers = showAll ? fundraisers : fundraisers.filter(f => f.raised < f.goal);
+
+            if (filteredFundraisers.length === 0) {
+                list.innerHTML = '<p>No fundraising items to show.</p>';
+            } else {
+                filteredFundraisers.forEach((fundraiser, index) => {
+                    // Render each item with the new filter applied
+                });
+            }
+        }
+
+        // Initial setup for UI elements like the filter button
+        document.getElementById('content').innerHTML = `
+            <h1>Donation Tracker</h1>
+            <button class="button" onclick="showAddFundraiserModal()">Add Fundraising Item</button>
+            <button id="filterButton" class="button" onclick="toggleFilter()">Show All</button>
+            <div id="fundraising-list"></div>
+        `;
+
+        // Call render to initialize the view
+        render();
+    </script>
+</body>
+</html>

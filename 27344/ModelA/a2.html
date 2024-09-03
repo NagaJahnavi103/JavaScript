@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donation Tracker</title>
+    <style>
+        /* Adding some basic styling for toast messages */
+        .toast {
+            visibility: hidden;
+            min-width: 250px;
+            margin-left: -125px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 2px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1;
+            left: 50%;
+            bottom: 30px;
+        }
+        .toast.show {
+            visibility: visible;
+            -webkit-animation: fadein 0.5s, fadeout 0.5s 4.5s;
+            animation: fadein 0.5s, fadeout 0.5s 4.5s;
+        }
+        @-webkit-keyframes fadein {
+            from {bottom: 0; opacity: 0;}
+            to {bottom: 30px; opacity: 1;}
+        }
+        @keyframes fadein {
+            from {bottom: 0; opacity: 0;}
+            to {bottom: 30px; opacity: 1;}
+        }
+        @-webkit-keyframes fadeout {
+            from {bottom: 30px; opacity: 1;}
+            to {bottom: 0; opacity: 0;}
+        }
+        @keyframes fadeout {
+            from {bottom: 30px; opacity: 1;}
+            to {bottom: 0; opacity: 0;}
+        }
+        /* Existing styles... */
+    </style>
+</head>
+<body>
+    <!-- Adding toast container -->
+    <div id="toast" class="toast">Contribution added successfully!</div>
+
+    <!-- Existing HTML... -->
+
+    <script>
+        // ... (previous JavaScript code)
+
+        // Adding toast functionality
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = "toast show";
+            setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 5000);
+        }
+
+        function render() {
+            const content = document.getElementById('content');
+            const showAll = document.getElementById('filter').checked;
+            content.innerHTML = '';
+
+            if (view === 'list') {
+                content.innerHTML += `
+                    <h1>Donation Tracker</h1>
+                    <label><input type="checkbox" id="filter" onclick="render()"> Show all?</label>
+                    <button class="button" onclick="showAddFundraiserModal()">Add Fundraising Item</button>
+                    <div id="fundraising-list"></div>
+                `;
+                renderFundraisers(showAll);
+            } else if (view === 'detail') {
+                const fundraiser = fundraisers[currentFundraiserIndex];
+                const progressPercent = (fundraiser.raised / fundraiser.goal) * 100;
+                content.innerHTML += `
+                    <div class="details-container">
+                        <div class="details-content">
+                            <h1>${fundraiser.name}</h1>
+                            <div class="progress-bar">
+                                <div class="progress" style="width: ${progressPercent}%;"></div>
+                            </div>
+                            <p>Progress: ${progressPercent.toFixed(2)}%</p>
+                            <img src="${fundraiser.image}" alt="${fundraiser.name}" style="width: 100%; max-height: 300px; object-fit: cover; border-radius: 10px;">
+                            <p>${fundraiser.description}</p>
+                            <p><strong>Goal:</strong> $${fundraiser.goal}</p>
+                            <p><strong>Raised:</strong> $${fundraiser.raised}</p>
+                            <button class="button" onclick="showContributionModal(${currentFundraiserIndex})">Contribute</button>
+                            <button class="button" onclick="goBack()">Back</button>
+                        </div>
+                        <div class="leaderboard">
+                            <h2>Leaderboard</h2>
+                            ${fundraiser.contributors
+                                .sort((a, b) => b.amount - a.amount)
+                                .slice(0, 5)
+                                .map(contributor => `<p>${contributor.name}: $${contributor.amount}</p>`)
+                                .join('')}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function renderFundraisers(showAll) {
+            const fundraisingList = document.getElementById('fundraising-list');
+            fundraisingList.innerHTML = '';
+
+            const filteredFundraisers = showAll ? fundraisers : fundraisers.filter(f => f.raised < f.goal);
+
+            if (filteredFundraisers.length === 0) {
+                fundraisingList.innerHTML = '<p>No fundraising items match the current filter.</p>';
+            } else {
+                filteredFundraisers.forEach((fundraiser, index) => {
+                    fundraisingList.innerHTML += `
+                        <div class="fundraising-item">
+                            <img src="${fundraiser.image}" alt="${fundraiser.name}">
+                            <div class="fundraising-details" onclick="viewFundraiser(${index})">
+                                <h3>${fundraiser.name}</h3>
+                                <p>Goal: $${fundraiser.goal}</p>
+                            </div>
+                            <button class="button" onclick="showContributionModal(${index})">Contribute</button>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        function makeContribution() {
+            const name = document.getElementById('contributorName').value;
+            const amount = parseFloat(document.getElementById('contributionAmount').value);
+
+            if (currentFundraiserIndex !== null && name && amount) {
+                fundraisers[currentFundraiserIndex].raised += amount;
+                fundraisers[currentFundraiserIndex].contributors.push({ name, amount });
+                render();
+                hideContributionModal();
+                showToast('Contribution added successfully!');
+            }
+        }
+
+        // ... (remaining JavaScript code)
+    </script>
+</body>
+</html>
