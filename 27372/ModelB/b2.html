@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Color Palette Generator</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; background: #f9f9f9; }
+        .container { max-width: 800px; margin: 40px auto; padding: 20px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .color-box { width: 100px; height: 100px; display: inline-block; margin: 5px; border: 1px solid #eee; }
+        .harmony-select, .color-input { margin-bottom: 20px; }
+        #colorResult { margin-top: 20px; }
+        .outfit-suggestion { margin-top: 10px; }
+        .contrast-info { font-size: 0.8em; color: #666; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Advanced Color Theory Explorer</h1>
+    <select class="harmony-select" id="harmonySelect">
+        <option value="monochromatic">Monochromatic</option>
+        <option value="complementary">Complementary</option>
+        <option value="triadic">Triadic</option>
+    </select>
+    <input type="color" id="baseColor" value="#008000">
+    <button onclick="generatePalette()">Generate</button>
+    <div id="colorResult"></div>
+    <div id="outfitSuggestions"></div>
+</div>
+
+<script>
+    function generatePalette() {
+        const baseColor = document.getElementById('baseColor').value;
+        const harmony = document.getElementById('harmonySelect').value;
+        const palette = calculateHarmony(baseColor, harmony);
+        displayPalette(palette);
+        checkContrast(palette);
+        suggestOutfits(palette);
+    }
+
+    function calculateHarmony(baseColor, harmonyType) {
+        const palette = [baseColor];
+        switch(harmonyType) {
+            case 'monochromatic':
+                for (let i = 1; i < 5; i++) {
+                    palette.push(lightenDarkenColor(baseColor, i * 20));
+                }
+                break;
+            case 'complementary':
+                palette.push(getComplementaryColor(baseColor));
+                break;
+            case 'triadic':
+                palette.push(getTriadicColor(baseColor, 120));
+                palette.push(getTriadicColor(baseColor, 240));
+                break;
+        }
+        return palette;
+    }
+
+    function lightenDarkenColor(col, amt) {
+        let num = parseInt(col.replace("#",""),16);
+        let r = Math.max(0, Math.min(((num >> 16) + amt), 255));
+        let g = Math.max(0, Math.min(((num & 0x00FF00) >> 8 + amt), 255));
+        let b = Math.max(0, Math.min(((num & 0x0000FF) + amt), 255));
+        return '#' + (0x1000000 + r*0x10000 + g*0x100 + b).toString(16).slice(1);
+    }
+
+    function getComplementaryColor(hex) {
+        return '#' + (0xFFFFFF ^ parseInt(hex.replace('#', ''), 16)).toString(16).padStart(6, '0');
+    }
+
+    function getTriadicColor(hex, degree) {
+        let hsl = hexToHSL(hex);
+        hsl.h = (hsl.h + degree) % 360;
+        return HSLToHex(hsl);
+    }
+
+    function hexToHSL(hex) {
+        // Conversion logic from hex to HSL
+    }
+
+    function HSLToHex(hsl) {
+        // Conversion logic from HSL to hex
+    }
+
+    function displayPalette(palette) {
+        const resultDiv = document.getElementById('colorResult');
+        resultDiv.innerHTML = '';
+        palette.forEach(color => {
+            const div = document.createElement('div');
+            div.style.backgroundColor = color;
+            div.className = 'color-box';
+            resultDiv.appendChild(div);
+        });
+    }
+
+    function checkContrast(palette) {
+        const contrastInfoDiv = document.createElement('div');
+        contrastInfoDiv.className = 'contrast-info';
+        contrastInfoDiv.innerText = 'Contrast Ratios:\n';
+        palette.forEach((color, index) => {
+            const nextColor = palette[(index + 1) % palette.length];
+            const ratio = getContrastRatio(color, nextColor);
+            contrastInfoDiv.innerText += `Between ${color} and ${nextColor}: ${ratio.toFixed(2)}:1\n`;
+        });
+        document.getElementById('colorResult').appendChild(contrastInfoDiv);
+    }
+
+    function getContrastRatio(hex1, hex2) {
+        const lum1 = getRelativeLuminance(hex1);
+        const lum2 = getRelativeLuminance(hex2);
+        return (Math.max(lum1, lum2) + 0.05) / (Math.min(lum1, lum2) + 0.05);
+    }
+
+    function getRelativeLuminance(hex) {
+        const rgb = hexToRgb(hex);
+        const RsRGB = rgb.r / 255;
+        const GsRGB = rgb.g / 255;
+        const BsRGB = rgb.b / 255;
+        let R, G, B;
+
+        R = (RsRGB <= 0.03928) ? RsRGB / 12.92 : Math.pow((RsRGB + 0.055) / 1.055, 2.4);
+        G = (GsRGB <= 0.03928) ? GsRGB / 12.92 : Math.pow((GsRGB + 0.055) / 1.055, 2.4);
+        B = (BsRGB <= 0.03928) ? BsRGB / 12.92 : Math.pow((BsRGB + 0.055) / 1.055, 2.4);
+
+        return 0.2126 * R + 0.7152 * G + 0.0722 * B;
+    }
+
+    function hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
+    }
+
+    function suggestOutfits(palette) {
+        const outfitDiv = document.getElementById('outfitSuggestions');
+        outfitDiv.innerHTML = '<h3>Outfit Suggestions:</h3>';
+        palette.forEach(color => {
+            outfitDiv.innerHTML += `<div class="outfit-suggestion">Consider an outfit piece in <span style="color:${color};">${color}</span>.</div>`;
+        });
+    }
+</script>
+
+</body>
+</html>
