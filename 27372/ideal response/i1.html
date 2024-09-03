@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Outfit Color Palette Generator</title>
+    <style>
+        #palette, #suggestions { margin-top: 20px; }
+        .color-swatch { display: inline-block; width: 50px; height: 50px; margin: 5px; }
+        .accessory-item { margin: 10px 0; padding: 10px; border: 1px solid #eee; }
+    </style>
+</head>
+<body>
+    <h1>Outfit Color Palette Generator</h1>
+    <input type="file" id="imageLoader" name="imageLoader"/>
+    <canvas id="imageCanvas" style="display:none;"></canvas>
+    <div id="palette"></div>
+    <div id="suggestions"></div>
+
+    <!-- Include Color Thief library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
+
+    <script>
+        // Ensure ColorThief is loaded
+        if (typeof ColorThief === 'undefined') {
+            console.error('ColorThief is not loaded');
+        } else {
+            const imageLoader = document.getElementById('imageLoader');
+            const canvas = document.getElementById('imageCanvas');
+            const ctx = canvas.getContext('2d');
+            const paletteDiv = document.getElementById('palette');
+            const suggestionsDiv = document.getElementById('suggestions');
+
+            // Using color-thief for color extraction
+            const colorThief = new ColorThief();
+
+            imageLoader.addEventListener('change', handleImage, false);
+
+            function handleImage(e) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx.drawImage(img, 0, 0);
+                        const palette = colorThief.getPalette(img, 5); // Get 5 dominant colors
+                        displayPalette(palette);
+                        fetchAccessorySuggestions(palette);
+                    }
+                    img.src = event.target.result;
+                }
+                reader.readAsDataURL(e.target.files[0]);
+            }
+
+            function displayPalette(palette) {
+                paletteDiv.innerHTML = '';
+                palette.forEach(color => {
+                    const div = document.createElement('div');
+                    div.className = 'color-swatch';
+                    div.style.backgroundColor = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+                    paletteDiv.appendChild(div);
+                });
+            }
+
+            function fetchAccessorySuggestions(palette) {
+                // This function would typically call an API or use a local database
+                // Here's a mock implementation
+                const mockSuggestions = [
+                    {color: palette[0], type: 'scarf'},
+                    {color: palette[1], type: 'bag'},
+                    {color: palette[2], type: 'shoes'}
+                ];
+
+                suggestionsDiv.innerHTML = '';
+                mockSuggestions.forEach(suggestion => {
+                    const item = document.createElement('div');
+                    item.className = 'accessory-item';
+                    item.innerHTML = `<p>Try this ${suggestion.type} in this color: <span style="background-color: rgb(${suggestion.color[0]}, ${suggestion.color[1]}, ${suggestion.color[2]});">&nbsp;&nbsp;&nbsp;&nbsp;</span></p>
+                    <a href="#">Find ${suggestion.type}</a>`;
+                    suggestionsDiv.appendChild(item);
+                });
+            }
+        }
+    </script>
+</body>
+</html>

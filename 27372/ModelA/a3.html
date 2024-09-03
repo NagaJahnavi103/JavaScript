@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outfit Accessory Color Generator</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; background: #f4f4f4; }
+        .container { max-width: 800px; margin: 20px auto; padding: 20px; background: white; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        #imageUpload { display: none; }
+        #uploadLabel { cursor: pointer; background-color: #5cb85c; color: white; padding: 10px 15px; border-radius: 5px; display: inline-block; }
+        #imageDisplay { max-width: 100%; height: auto; display: block; margin: 20px auto; }
+        .color-box { width: 50px; height: 50px; display: inline-block; margin: 5px; }
+        #accessoryPalette { margin-top: 20px; }
+        .suggestion { margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Outfit Accessory Color Generator</h1>
+    <input type="file" id="imageUpload" accept="image/jpeg, image/png">
+    <label for="imageUpload" id="uploadLabel">Upload Image</label>
+    <img id="imageDisplay" src="#" alt="Uploaded Outfit Image" />
+    <button onclick="analyzeImage()">Analyze Image</button>
+    <div id="accessoryPalette"></div>
+    <div id="suggestions"></div>
+</div>
+
+<script>
+    const imageDisplay = document.getElementById('imageDisplay');
+    const uploadInput = document.getElementById('imageUpload');
+    
+    uploadInput.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imageDisplay.src = e.target.result;
+            };
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+
+    function analyzeImage() {
+        const img = document.getElementById('imageDisplay');
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const colors = extractColorsFromImageData(imageData);
+        generateAccessoryPalette(colors);
+        suggestAccessories(colors);
+    }
+
+    function extractColorsFromImageData(imageData) {
+        // Simple example: just return a fixed set of colors for demo purposes
+        return ['#ff69b4', '#33cc33', '#6666ff'];
+    }
+
+    function generateAccessoryPalette(colors) {
+        const paletteDiv = document.getElementById('accessoryPalette');
+        paletteDiv.innerHTML = '';
+        colors.forEach(color => {
+            const div = document.createElement('div');
+            div.className = 'color-box';
+            div.style.background = color;
+            paletteDiv.appendChild(div);
+        });
+    }
+
+    function suggestAccessories(colors) {
+        const suggestionDiv = document.getElementById('suggestions');
+        suggestionDiv.innerHTML = '';
+        const accessories = ["Belt", "Hat", "Scarf"];
+        colors.forEach((color, index) => {
+            const accessory = accessories[index % accessories.length];
+            suggestionDiv.innerHTML += `<div class="suggestion">Try a <span style="color:${color};">${accessory}</span> in this color. <a href="#" target="_blank">Shop Now</a></div>`;
+        });
+    }
+</script>
+
+</body>
+</html>
