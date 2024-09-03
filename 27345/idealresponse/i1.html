@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urban Sustainability Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .chart-container {
+            width: 800px;
+            height: 400px;
+            margin: 20px auto;
+        }
+        .filters {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="filters">
+        <select id="city-filter">
+            <option value="all">All Cities</option>
+            <option value="Tokyo">Tokyo</option>
+            <option value="NYC">New York City</option>
+            <option value="Berlin">Berlin</option>
+        </select>
+        <select id="category-filter">
+            <option value="all">All Categories</option>
+            <option value="Green Space">Green Space</option>
+            <option value="Energy Efficiency">Energy Efficiency</option>
+            <option value="Emission Reduction">Emission Reduction</option>
+        </select>
+    </div>
+    <div class="chart-container">
+        <canvas id="lineChart"></canvas>
+    </div>
+    <div class="chart-container">
+        <canvas id="barChart"></canvas>
+    </div>
+
+    <script>
+        const ctxLine = document.getElementById('lineChart').getContext('2d');
+        const ctxBar = document.getElementById('barChart').getContext('2d');
+
+        // Data for the charts based on the sustainability initiatives
+        const originalData = {
+            labels: Array.from({length: 11}, (_, i) => 2015 + i),
+            datasets: [
+                // Tokyo Data
+                {
+                    label: 'Tokyo Green Space',
+                    data: [0, 2, 5, 7, 10, 12, 15, 17, 20, 22, 25],
+                    borderColor: 'green',
+                    fill: false,
+                    city: 'Tokyo',
+                    category: 'Green Space'
+                },
+                {
+                    label: 'Tokyo Energy Efficiency',
+                    data: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20],
+                    borderColor: 'orange',
+                    fill: false,
+                    city: 'Tokyo',
+                    category: 'Energy Efficiency'
+                },
+                {
+                    label: 'Tokyo Emission Reduction',
+                    data: [0, 1, 3, 5, 7, 9, 11, 13, 14, 15],
+                    borderColor: 'blue',
+                    fill: false,
+                    city: 'Tokyo',
+                    category: 'Emission Reduction'
+                },
+                // NYC Data
+                {
+                    label: 'NYC Green Space',
+                    data: [1, 3, 4, 6, 8, 11, 13, 15, 18, 20, 22],
+                    borderColor: 'lightgreen',
+                    fill: false,
+                    city: 'NYC',
+                    category: 'Green Space'
+                },
+                {
+                    label: 'NYC Energy Efficiency',
+                    data: [0, 3, 6, 9, 12, 16, 20, 24, 28, 32, 36],
+                    borderColor: 'purple',
+                    fill: false,
+                    city: 'NYC',
+                    category: 'Energy Efficiency'
+                },
+                {
+                    label: 'NYC Emission Reduction',
+                    data: [0, 1, 2, 3, 4, 6, 8, 9, 10, 10, 10],
+                    borderColor: 'darkblue',
+                    fill: false,
+                    city: 'NYC',
+                    category: 'Emission Reduction'
+                },
+                // Berlin Data
+                {
+                    label: 'Berlin Green Space',
+                    data: [1, 2, 3, 4, 6, 7, 9, 11, 13, 14, 16],
+                    borderColor: 'darkgreen',
+                    fill: false,
+                    city: 'Berlin',
+                    category: 'Green Space'
+                },
+                {
+                    label: 'Berlin Energy Efficiency',
+                    data: [2, 3, 5, 7, 9, 12, 14, 16, 18, 20, 23],
+                    borderColor: 'red',
+                    fill: false,
+                    city: 'Berlin',
+                    category: 'Energy Efficiency'
+                },
+                {
+                    label: 'Berlin Emission Reduction',
+                    data: [1, 2, 4, 5, 6, 8, 10, 12, 15, 18, 20],
+                    borderColor: 'cyan',
+                    fill: false,
+                    city: 'Berlin',
+                    category: 'Emission Reduction'
+                }
+            ]
+        };
+
+        const originalBarData = {
+            labels: originalData.labels,
+            datasets: [
+                {
+                    label: 'Tokyo Initiatives',
+                    data: [5, 7, 9, 10, 12, 14, 16, 18, 19, 22],
+                    backgroundColor: 'lightgreen',
+                    category: 'Green Space',
+                    city: 'Tokyo'
+                }, 
+                {
+                    label: 'NYC Initiatives',
+                    data: [10, 12, 14, 18, 22, 24, 26, 30, 34, 36],
+                    backgroundColor: 'purple',
+                    category: 'Energy Efficiency',
+                    city: 'NYC'
+                }, 
+                {
+                    label: 'Berlin Initiatives',
+                    data: [2, 4, 6, 8, 10, 14, 16, 18, 20, 22],
+                    backgroundColor: 'red',
+                    category: 'Emission Reduction',
+                    city: 'Berlin'
+                }
+            ]
+        };
+
+        let lineChart = new Chart(ctxLine, {
+            type: 'line',
+            data: originalData,
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Progress: ${context.parsed.y}%`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        let barChart = new Chart(ctxBar, {
+            type: 'bar',
+            data: originalBarData,
+            options: {
+                scales: {
+                    x: { stacked: true },
+                    y: { stacked: true }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.parsed.y}%`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        document.getElementById('city-filter').addEventListener('change', updateChart);
+        document.getElementById('category-filter').addEventListener('change', updateChart);
+
+        function updateChart() {
+            const cityFilter = document.getElementById('city-filter').value;
+            const categoryFilter = document.getElementById('category-filter').value;
+
+            // Filter the data for the line chart
+            const filteredLineData = {
+                labels: originalData.labels,
+                datasets: originalData.datasets.filter(dataset => {
+                    const matchCity = cityFilter === 'all' || dataset.city === cityFilter;
+                    const matchCategory = categoryFilter === 'all' || dataset.category === categoryFilter;
+                    return matchCity && matchCategory;
+                })
+            };
+
+            // Filter the data for the bar chart
+            const filteredBarData = {
+                labels: originalBarData.labels,
+                datasets: originalBarData.datasets.filter(dataset => {
+                    const matchCity = cityFilter === 'all' || dataset.city === cityFilter;
+                    const matchCategory = categoryFilter === 'all' || dataset.category === categoryFilter;
+                    return matchCity && matchCategory;
+                })
+            };
+
+            // Update the charts with the filtered data
+            lineChart.data = filteredLineData;
+            lineChart.update();
+
+            barChart.data = filteredBarData;
+            barChart.update();
+        }
+    </script>
+</body>
+</html>

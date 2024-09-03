@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Urban Sustainability Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.css">
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .chart-container { width: 80%; margin: 20px auto; }
+        select { margin: 10px; padding: 5px; }
+    </style>
+</head>
+<body>
+    <div>
+        <select id="cityFilter">
+            <option value="all">All Cities</option>
+            <option value="Tokyo">Tokyo</option>
+            <option value="New York">New York</option>
+            <option value="Berlin">Berlin</option>
+        </select>
+        <select id="categoryFilter">
+            <option value="all">All Categories</option>
+            <option value="Green Space">Green Space</option>
+            <option value="Energy Efficiency">Energy Efficiency</option>
+            <option value="Emissions">Emissions</option>
+        </select>
+    </div>
+    <div class="chart-container">
+        <canvas id="lineChart" width="400" height="200"></canvas>
+    </div>
+    <div class="chart-container">
+        <canvas id="barChart" width="400" height="200"></canvas>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
+    <script>
+    // Data simulation based on the initiatives described
+    let data = {
+        Tokyo: { 
+            'Green Space': [1, 3, 6, 10, 15, 20, 25],
+            'Energy Efficiency': [2, 5, 8, 11, 14, 17, 20],
+            'Emissions': [1, 3, 6, 9, 12, 13, 15]
+        },
+        'New York': {
+            'Energy Efficiency': [1, 4, 8, 12, 16, 19, 22],
+            'Renewable Energy': [2, 5, 10, 15, 20, 25, 30],
+            'Emissions': [1, 2, 4, 6, 8, 9, 10]
+        },
+        Berlin: {
+            'Green Space': [0, 2, 5, 10, 15, 20, 25],
+            'Energy Efficiency': [3, 6, 9, 12, 15, 18, 21],
+            'Emissions': [2, 7, 12, 17, 22, 25, 30]
+        }
+    };
+
+    let ctxLine = document.getElementById('lineChart').getContext('2d');
+    let ctxBar = document.getElementById('barChart').getContext('2d');
+
+    function updateCharts(city = 'all', category = 'all') {
+        let datasetsLine = [];
+        let datasetsBar = [];
+
+        for (let c in data) {
+            if (city !== 'all' && c !== city) continue;
+            for (let cat in data[c]) {
+                if (category !== 'all' && cat !== category) continue;
+                
+                // Line chart data
+                datasetsLine.push({
+                    label: `${c} - ${cat}`,
+                    data: data[c][cat],
+                    borderColor: 'rgba(' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ', 1)',
+                    fill: false
+                });
+
+                // Preparing data for bar chart (simplified)
+                if (cat === category || category === 'all') {
+                    datasetsBar.push({
+                        label: cat,
+                        data: data[c][cat],
+                        backgroundColor: 'rgba(' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ', 0.6)'
+                    });
+                }
+            }
+        }
+
+        // Line Chart
+        new Chart(ctxLine, {
+            type: 'line',
+            data: {
+                labels: ['2015', '2016', '2017', '2018', '2019', '2020', '2025'],
+                datasets: datasetsLine
+            },
+            options: {
+                scales: {
+                    yAxes: [{ticks: {beginAtZero: true}}]
+                },
+                tooltips: {
+                    callbacks: {
+                        label: function(tooltipItem, data) {
+                            return data.datasets[tooltipItem.datasetIndex].label + ': ' + tooltipItem.yLabel + '%';
+                        }
+                    }
+                }
+            }
+        });
+
+        // Stacked Bar Chart
+        new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: ['2015', '2016', '2017', '2018', '2019', '2020', '2025'],
+                datasets: datasetsBar
+            },
+            options: {
+                scales: {
+                    xAxes: [{stacked: true}],
+                    yAxes: [{stacked: true, ticks: {beginAtZero: true}}]
+                },
+                tooltips: {
+                    mode: 'index',
+                    intersect: false
+                }
+            }
+        });
+    }
+
+    document.getElementById('cityFilter').addEventListener('change', function() {
+        updateCharts(this.value, document.getElementById('categoryFilter').value);
+    });
+    document.getElementById('categoryFilter').addEventListener('change', function() {
+        updateCharts(document.getElementById('cityFilter').value, this.value);
+    });
+
+    updateCharts(); // Initial chart load
+    </script>
+</body>
+</html>

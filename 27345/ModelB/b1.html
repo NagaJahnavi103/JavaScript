@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urban Sustainability Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .chart-container { width: 80%; margin: auto; }
+        #filter { text-align: center; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div id="filter">
+        <select id="cityFilter">
+            <option value="all">All Cities</option>
+            <option value="tokyo">Tokyo</option>
+            <option value="nyc">New York City</option>
+            <option value="berlin">Berlin</option>
+        </select>
+        <select id="categoryFilter">
+            <option value="all">All Categories</option>
+            <option value="greenSpace">Green Space Expansion</option>
+            <option value="energyEfficiency">Energy Efficiency</option>
+            <option value="emissionReduction">Emission Reduction</option>
+        </select>
+    </div>
+    <div class="chart-container">
+        <canvas id="lineChart"></canvas>
+        <canvas id="stackedBarChart"></canvas>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const ctxLine = document.getElementById('lineChart').getContext('2d');
+        const ctxBar = document.getElementById('stackedBarChart').getContext('2d');
+        const cityFilter = document.getElementById('cityFilter');
+        const categoryFilter = document.getElementById('categoryFilter');
+
+        // Hypothetical data for demonstration purposes
+        const data = {
+            labels: Array.from({length: 11}, (_, i) => 2015 + i),
+            tokyo: {
+                greenSpace: [5, 7, 10, 12, 15, 17, 19, 21, 23, 25],
+                energyEfficiency: [4, 6, 8, 10, 12, 14, 16, 18, 20],
+                emissionReduction: [3, 5, 7, 9, 11, 13, 15],
+            },
+            nyc: {
+                greenSpace: [3, 5, 8, 11, 13, 15],
+                energyEfficiency: [2, 5, 8, 11, 14, 17, 20],
+                emissionReduction: [2, 4, 6, 8, 10, 12],
+            },
+            berlin: {
+                greenSpace: [4, 6, 8, 10, 12, 15],
+                energyEfficiency: [3, 6, 9, 12, 15, 18],
+                emissionReduction: [3, 5, 7, 9, 11],
+            }
+        };
+
+        const lineChart = new Chart(ctxLine, {
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    label: 'Green Space Expansion',
+                    data: data.tokyo.greenSpace,
+                    borderColor: 'green',
+                    fill: false
+                }, {
+                    label: 'Energy Efficiency',
+                    data: data.tokyo.energyEfficiency,
+                    borderColor: 'blue',
+                    fill: false
+                }, {
+                    label: 'Emission Reduction',
+                    data: data.tokyo.emissionReduction,
+                    borderColor: 'red',
+                    fill: false
+                }]
+            },
+            options: {
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        const stackedBarChart = new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: data.labels,
+                datasets: []
+            },
+            options: {
+                scales: {
+                    x: { stacked: true },
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        function updateCharts() {
+            const selectedCity = cityFilter.value === 'all' ? Object.keys(data) : [cityFilter.value];
+            const selectedCategory = categoryFilter.value === 'all' ? ['greenSpace', 'energyEfficiency', 'emissionReduction'] : [categoryFilter.value];
+            
+            lineChart.data.datasets = selectedCity.flatMap(city => {
+                return selectedCategory.map(category => {
+                    return {
+                        label: `${city} - ${category}`,
+                        data: data[city][category],
+                        borderColor: getRandomColor(),
+                        fill: false
+                    };
+                });
+            });
+
+            stackedBarChart.data.datasets = selectedCategory.map((category, index) => {
+                const cityData = selectedCity.map(city => ({ x: city, y: data[city][category].slice(-1)[0] }));
+                return {
+                    label: category,
+                    data: cityData,
+                    backgroundColor: getRandomColor(index)
+                };
+            });
+
+            lineChart.update();
+            stackedBarChart.update();
+        }
+
+        function getRandomColor(index = 0) {
+            const colors = ['green', 'blue', 'red', 'yellow', 'purple'];
+            return colors[index % colors.length];
+        }
+
+        cityFilter.addEventListener('change', updateCharts);
+        categoryFilter.addEventListener('change', updateCharts);
+
+        updateCharts();
+    </script>
+</body>
+</html>
