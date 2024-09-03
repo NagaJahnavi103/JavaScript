@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI in Urban Management</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        #radarChart, #heatMap {
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body>
+    <div id="radarChart"></div>
+    <div id="heatMap"></div>
+
+    <script>
+    // Radar Chart using Chart.js
+    const radarCtx = document.getElementById('radarChart').getContext('2d');
+    const radarChart = new Chart(radarCtx, {
+        type: 'radar',
+        data: {
+            labels: ['Traffic Flow Improvement', 'Crime Reduction', 'Public Transport Efficiency', 'Energy Consumption Reduction'],
+            datasets: [{
+                label: 'Singapore',
+                data: [20, 15, 0, 0],  // Assuming Singapore doesn't focus on public transport efficiency or has no data for energy here
+                borderColor: 'red',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            }, {
+                label: 'London',
+                data: [0, 0, 12, 0],  // London focuses on transport efficiency
+                borderColor: 'blue',
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            }, {
+                label: 'Sydney',
+                data: [0, 0, 0, 10],  // Sydney focuses on energy reduction
+                borderColor: 'green',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            }]
+        },
+        options: {
+            scale: {
+                ticks: {
+                    beginAtZero: true,
+                    max: 20  // Assuming 20% is the max improvement we're considering for any metric
+                }
+            }
+        }
+    });
+
+    // Heat Map using D3.js
+    const width = 600, height = 400;
+    const svg = d3.select("#heatMap")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+    // Mock data for geographical distribution
+    const heatData = [
+        {city: "Singapore", lat: 1.3521, long: 103.8198, intensity: 0.8},
+        {city: "London", lat: 51.5074, long: -0.1278, intensity: 0.6},
+        {city: "Sydney", lat: -33.8688, long: 151.2093, intensity: 0.5}
+    ];
+
+    const scaleIntensity = d3.scaleLinear()
+        .domain([0, d3.max(heatData, d => d.intensity)])
+        .range(["#FFFFFF", "#FF0000"]); // From white to red
+
+    heatData.forEach(d => {
+        svg.append("circle")
+           .attr("cx", width * (d.long + 180) / 360) // Simple projection
+           .attr("cy", height - (height * (d.lat + 90) / 180)) // Simple projection for latitude
+           .attr("r", 10)
+           .attr("fill", scaleIntensity(d.intensity))
+           .attr("stroke", "black")
+           .append("title") // Tooltip
+           .text(`${d.city}: AI Implementation Intensity ${d.intensity}`);
+    });
+
+    </script>
+</body>
+</html>
