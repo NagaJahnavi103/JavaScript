@@ -3,96 +3,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Mood Journal</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.0.0/dist/chart.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
-
+    <title>Habit Tracker Widget</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        body { font-family: 'Arial', sans-serif; padding: 20px; }
-        .widget { max-width: 600px; margin: auto; }
-        .mood-selector { display: flex; justify-content: space-around; margin-bottom: 20px; }
-        .mood-selector span { font-size: 2em; cursor: pointer; }
-        .tag-input, .reflection { width: 100%; margin-bottom: 15px; }
-        .tag-input input { width: calc(100% - 20px); padding: 10px; }
-        #moodGraph { width: 100%; height: 300px; }
-        @media (max-width: 480px) {
-            .mood-selector span { font-size: 1.5em; }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: \#f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .tracker-container {
+            width: 80\%;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: \#fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        .tracker-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .tracker-header h2 {
+            margin: 0;
+        }
+        .view-buttons button {
+            padding: 10px 15px;
+            border: none;
+            background-color: \#007bff;
+            color: \#fff;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+        .view-buttons button.active {
+            background-color: \#0056b3;
+        }
+        .habit-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .habit-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: \#f9f9f9;
+            border: 1px solid \#ddd;
+            border-radius: 5px;
+        }
+        .habit-item.completed {
+            text-decoration: line-through;
+            color: \#888;
+        }
+        .habit-item .reminder {
+            cursor: pointer;
+        }
+        .chart-container {
+            margin: 30px 0;
+        }
+        .calendar-integration {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .calendar-integration a {
+            text-decoration: none;
+            color: \#007bff;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
-<div class="widget">
-    <h2>Daily Mood Journal</h2>
-    <div class="mood-selector">
-        <span role="img" aria-label="Happy" onclick="selectMood('😊')">😊</span>
-        <span role="img" aria-label="Neutral" onclick="selectMood('😐')">😐</span>
-        <span role="img" aria-label="Sad" onclick="selectMood('😢')">😢</span>
+    <div class="tracker-container">
+        <div class="tracker-header">
+            <h2>Habit Tracker</h2>
+            <div class="view-buttons">
+                <button class="active" onclick="switchView('daily')">Daily</button>
+                <button onclick="switchView('weekly')">Weekly</button>
+                <button onclick="switchView('monthly')">Monthly</button>
+            </div>
+        </div>
+
+        <div class="habit-list" id="habitList">
+            <!-- Habits will be dynamically added here -->
+        </div>
+
+        <div class="chart-container">
+            <canvas id="progressChart"></canvas>
+        </div>
+
+        <div class="calendar-integration">
+            <a href="\#" onclick="downloadCalendarEvent()">Add to Calendar</a>
+        </div>
     </div>
-    <div class="tag-input">
-        <input type="text" id="customTag" placeholder="Add custom emotion tag...">
-    </div>
-    <textarea class="reflection" id="dailyReflection" rows="4" placeholder="How was your day?"></textarea>
-    <button onclick="saveEntry()">Save Entry</button>
-    <div id="moodGraph"><canvas id="moodChart"></canvas></div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    let moodData = JSON.parse(localStorage.getItem('moodJournal') || '[]');
-    
-    function selectMood(mood) {
-        document.querySelectorAll('.mood-selector span').forEach(el => el.style.transform = '');
-        event.target.style.transform = 'scale(1.2)';
-        moodData.push({
-            date: new Date().toISOString().split('T')[0],
-            mood,
-            tag: document.getElementById('customTag').value,
-            reflection: document.getElementById('dailyReflection').value
-        });
-        updateChart();
-    }
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Sample habits
+        const habits = [
+            { name: "Morning Jog", completed: 5, total: 7 },
+            { name: "Read a Book", completed: 3, total: 7 },
+            { name: "Meditation", completed: 6, total: 7 },
+            { name: "Drink Water", completed: 7, total: 7 }
+        ];
 
-    function saveEntry() {
-        localStorage.setItem('moodJournal', JSON.stringify(moodData));
-        alert('Entry saved!');
-    }
+        const habitListElement = document.getElementById('habitList');
+        const progressChartElement = document.getElementById('progressChart');
 
-    function updateChart() {
-        const ctx = document.getElementById('moodChart').getContext('2d');
-        const moodLabels = moodData.map(entry => entry.date);
-        const moodValues = moodData.map(entry => ['😢', '😐', '😊'].indexOf(entry.mood));
-        
-        if (window.myChart) window.myChart.destroy();
-        window.myChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: moodLabels,
-                datasets: [{
-                    label: 'Mood Trend',
-                    data: moodValues,
-                    borderColor: 'blue',
-                    fill: false
-                }]
-            },
-            options: {
-                scales: {
-                    y: { 
-                        ticks: { 
-                            callback: function(value) {
-                                return ['😢', '😐', '😊'][value];
-                            },
-                            stepSize: 1
+        function renderHabits() {
+            habitListElement.innerHTML = '';
+            habits.forEach(habit => {
+                const habitItem = document.createElement('div');
+                habitItem.classList.add('habit-item');
+                habitItem.innerHTML = `
+                    <span>\${habit.name}</span>
+                    <div>
+                        <span>\${habit.completed}/\${habit.total}</span>
+                        <i class="fas fa-bell reminder" onclick="setReminder('\${habit.name}')"></i>
+                    </div>
+                `;
+                if (habit.completed === habit.total) {
+                    habitItem.classList.add('completed');
+                }
+                habitListElement.appendChild(habitItem);
+            });
+        }
+
+        function renderChart(view) {
+            const labels = habits.map(habit => habit.name);
+            const data = habits.map(habit => habit.completed);
+
+            const chart = new Chart(progressChartElement, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: `\${view} Progress`,
+                        data: data,
+                        backgroundColor: 'rgba(0, 123, 255, 0.5)',
+                        borderColor: 'rgba(0, 123, 255, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 7
                         }
                     }
                 }
-            }
-        });
-    }
+            });
+        }
 
-    updateChart();
-</script>
+        function switchView(view) {
+            document.querySelectorAll('.view-buttons button').forEach(button => {
+                button.classList.remove('active');
+            });
+            document.querySelector(`button[onclick="switchView('\${view}')"]`).classList.add('active');
+            renderChart(view);
+        }
+
+        function setReminder(habitName) {
+            alert(`Reminder set for \${habitName}`);
+        }
+
+        function downloadCalendarEvent() {
+            const icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+SUMMARY:Complete Your Habits
+DTSTART:\${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z
+DESCRIPTION:Remember to complete your daily habits.
+END:VEVENT
+END:VCALENDAR`;
+
+            const blob = new Blob([icsContent], { type: 'text/calendar' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'habit-reminder.ics';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        // Initial Render
+        renderHabits();
+        renderChart('daily');
+    </script>
 </body>
 </html>
