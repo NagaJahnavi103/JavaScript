@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robotics Impact Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .container { max-width: 1200px; margin: auto; padding: 20px; }
+        .filters { margin-bottom: 20px; }
+        canvas { max-width: 100\%; height: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Robotics Impact Dashboard</h1>
+        <div class="filters">
+            <label for="industry">Industry:</label>
+            <select id="industry">
+                <option value="all">All</option>
+                <option value="manufacturing">Manufacturing</option>
+                <option value="healthcare">Healthcare</option>
+                <option value="construction">Construction</option>
+            </select>
+            <label for="technology">Technology:</label>
+            <select id="technology">
+                <option value="all">All</option>
+                <option value="spot">Spot Robot</option>
+                <option value="tesla">Tesla AI Arms</option>
+                <option value="davinci">Da Vinci Surgical System</option>
+            </select>
+        </div>
+        <canvas id="roboticsChart" width="400" height="200"></canvas>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('roboticsChart').getContext('2d');
+        const data = {
+            labels: ['2017', '2018', '2019', '2020', '2021', '2022', '2023'],
+            datasets: [
+                { 
+                    label: 'Accident Reduction (\%)', 
+                    data: [0, 0, 0, 0, 15, 25, 30], 
+                    borderColor: 'rgb(255, 99, 132)', 
+                    fill: false,
+                    type: 'line'
+                },
+                { 
+                    label: 'Production Speed Increase (\%)', 
+                    data: [0, 0, 20, 20, 20, 20, 20], 
+                    borderColor: 'rgb(54, 162, 235)', 
+                    fill: false,
+                    type: 'line'
+                },
+                { 
+                    label: 'Recovery Time Improvement (\%)', 
+                    data: [0, 25, 25, 25, 25, 25, 25], 
+                    borderColor: 'rgb(75, 192, 192)', 
+                    fill: false,
+                    type: 'line'
+                },
+                { 
+                    label: 'Spot Robot Adoption', 
+                    data: [0, 10, 20, 40, 70, 100, 100], 
+                    backgroundColor: 'rgba(255, 159, 64, 0.2)',
+                    borderColor: 'rgb(255, 159, 64)',
+                    fill: true,
+                    type: 'line'
+                },
+                { 
+                    label: 'Tesla AI Arms Adoption', 
+                    data: [0, 0, 10, 30, 50, 70, 90], 
+                    backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                    borderColor: 'rgb(153, 102, 255)',
+                    fill: true,
+                    type: 'line'
+                },
+                { 
+                    label: 'Da Vinci System Adoption', 
+                    data: [0, 20, 40, 60, 80, 90, 100], 
+                    backgroundColor: 'rgba(201, 203, 207, 0.2)',
+                    borderColor: 'rgb(201, 203, 207)',
+                    fill: true,
+                    type: 'line'
+                }
+            ]
+        };
+
+        const myChart = new Chart(ctx, {
+            type: 'line',
+            data: data,
+            options: {
+                responsive: true,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += context.parsed.y + '\%';
+                                }
+                                return label;
+                            },
+                            afterBody: function(tooltipItems) {
+                                return "Detailed insight: This percentage shows the effectiveness or adoption rate of the selected technology in the chosen year.";
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Percentage'
+                        }
+                    }
+                }
+            }
+        });
+
+        function updateChart() {
+            const industry = document.getElementById('industry').value;
+            const technology = document.getElementById('technology').value;
+            
+            // Here you would typically filter your data based on the selected industry and technology
+            // For simplicity, this example does not change the data but you would implement this logic here
+            myChart.update();
+        }
+
+        document.getElementById('industry').addEventListener('change', updateChart);
+        document.getElementById('technology').addEventListener('change', updateChart);
+    </script>
+</body>
+</html>
