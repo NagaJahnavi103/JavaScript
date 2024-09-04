@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Esports vs Traditional Sports Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.5.1/dist/chart.min.css">
+    <style>
+        body { font-family: 'Arial', sans-serif; }
+        \#dashboard { width: 90\%; margin: 20px auto; }
+        canvas { margin-top: 20px; }
+        .filters { margin: 20px 0; }
+    </style>
+</head>
+<body>
+<div id="dashboard">
+    <div class="filters">
+        <select id="gameFilter">
+            <option value="all">All Games/Events</option>
+            <option value="LoL">League of Legends</option>
+            <option value="Dota2">Dota 2</option>
+            <option value="CSGO">CS:GO</option>
+            <option value="NBA">NBA Finals</option>
+            <!-- Add more options as necessary -->
+        </select>
+        <select id="yearFilter">
+            <option value="all">All Years</option>
+            <option value="2017">2017</option>
+            <option value="2018">2018</option>
+            <option value="2019">2019</option>
+            <option value="2020">2020</option>
+            <option value="2021">2021</option>
+            <option value="2022">2022</option>
+        </select>
+    </div>
+    <canvas id="barChart" width="400" height="200"></canvas>
+    <canvas id="lineChart" width="400" height="200"></canvas>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1"></script>
+<script>
+    const barCtx = document.getElementById('barChart').getContext('2d');
+    const lineCtx = document.getElementById('lineChart').getContext('2d');
+
+    const data = {
+        viewership: {
+            'LoL': {2017: 80, 2018: 99.6, 2019: 100, 2020: 105, 2021: 73.8, 2022: 112},
+            'Dota2': {2017: 5, 2018: 10, 2019: 11, 2020: 12, 2021: 15, 2022: 15.5},
+            'CSGO': {2017: 34, 2018: 25, 2019: 28, 2020: 21, 2021: 71, 2022: 65},
+            'NBA': {2017: 17.8, 2018: 17.6, 2019: 18, 2020: 7.5, 2021: 12.4, 2022: 12.1}
+        },
+        prizePool: {
+            'Dota2': {2017: 24.7, 2018: 25.5, 2019: 34.3, 2020: 8, 2021: 40, 2022: 40},
+            'CSGO': {2017: 1, 2018: 1, 2019: 1, 2020: 1.5, 2021: 2, 2022: 2.3}
+        },
+        players: {
+            'CSGO': {2017: 7143, 2018: 8000, 2019: 8500, 2020: 9000, 2021: 10000, 2022: 10500}
+        }
+    };
+
+    const barChart = new Chart(barCtx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(data.viewership['LoL']),
+            datasets: []
+        },
+        options: {
+            scales: {
+                x: { stacked: true },
+                y: { beginAtZero: true, title: { display: true, text: 'Viewership (Millions)' } }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `\${context.dataset.label}: \${context.parsed.y}M viewers`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    const lineChart = new Chart(lineCtx, {
+        type: 'line',
+        data: {
+            labels: Object.keys(data.prizePool['Dota2']),
+            datasets: [
+                {
+                    label: 'Dota 2 Prize Pool (\$M)',
+                    data: Object.values(data.prizePool['Dota2']),
+                    borderColor: 'blue',
+                    fill: false
+                },
+                {
+                    label: 'CS:GO Prize Pool (\$M)',
+                    data: Object.values(data.prizePool['CSGO']),
+                    borderColor: 'green',
+                    fill: false
+                },
+                {
+                    label: 'CS:GO Pro Players',
+                    data: Object.values(data.players['CSGO']),
+                    borderColor: 'red',
+                    fill: false,
+                    yAxisID: 'yPlayers'
+                }
+            ]
+        },
+        options: {
+            scales: {
+                y: { beginAtZero: true, title: { display: true, text: 'Prize Pool (\$ Millions)' } },
+                yPlayers: { 
+                    beginAtZero: true, 
+                    position: 'right', 
+                    title: { display: true, text: 'Number of Players' },
+                    grid: { drawOnChartArea: false }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label === 'CS:GO Pro Players') {
+                                return `\${label}: \${context.parsed.y}`;
+                            }
+                            return `\${label}: \$\${context.parsed.y}M`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    function updateCharts() {
+        const game = \$('\#gameFilter').val();
+        const year = \$('\#yearFilter').val();
+
+        // Update Bar Chart
+        barChart.data.datasets = Object.keys(data.viewership).map(key => {
+            if (game === 'all' || game === key) {
+                return {
+                    label: key,
+                    data: Object.entries(data.viewership[key])
+                        .filter(([y, \_]) => year === 'all' || y === year)
+                        .map(([\_, v]) => v),
+                    backgroundColor: `rgba(\${Math.random()*255}, \${Math.random()*255}, \${Math.random()*255}, 0.5)`
+                };
+            }
+            return null;
+        }).filter(Boolean);
+
+        // Update Line Chart (if necessary, similar logic can be applied)
+        lineChart.update();
+        barChart.update();
+    }
+
+    \$('\#gameFilter, \#yearFilter').on('change', updateCharts);
+
+    updateCharts();
+</script>
+</body>
+</html>
