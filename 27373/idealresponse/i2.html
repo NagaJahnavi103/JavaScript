@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Habit Tracker Widget</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: \#f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .tracker-container {
+            width: 80\%;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: \#fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        .tracker-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .tracker-header h2 {
+            margin: 0;
+        }
+        .view-buttons button {
+            padding: 10px 15px;
+            border: none;
+            background-color: \#007bff;
+            color: \#fff;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+        .view-buttons button.active {
+            background-color: \#0056b3;
+        }
+        .habit-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .habit-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: \#f9f9f9;
+            border: 1px solid \#ddd;
+            border-radius: 5px;
+        }
+        .habit-item.completed {
+            text-decoration: line-through;
+            color: \#888;
+        }
+        .habit-item .reminder {
+            cursor: pointer;
+        }
+        .streak {
+            font-size: 14px;
+            color: \#28a745;
+        }
+        .chart-container {
+            margin: 30px 0;
+        }
+        .calendar-integration,
+        .weekly-summary {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .calendar-integration a,
+        .weekly-summary a {
+            text-decoration: none;
+            color: \#007bff;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="tracker-container">
+        <div class="tracker-header">
+            <h2>Enhanced Habit Tracker</h2>
+            <div class="view-buttons">
+                <button class="active" onclick="switchView('daily')">Daily</button>
+                <button onclick="switchView('weekly')">Weekly</button>
+                <button onclick="switchView('monthly')">Monthly</button>
+            </div>
+        </div>
+
+        <div class="habit-list" id="habitList">
+            <!-- Habits will be dynamically added here -->
+        </div>
+
+        <div class="chart-container">
+            <canvas id="progressChart"></canvas>
+        </div>
+
+        <div class="calendar-integration">
+            <a href="\#" onclick="syncWithGoogleCalendar()">Sync with Google Calendar</a>
+        </div>
+
+        <div class="weekly-summary">
+            <a href="\#" onclick="sendWeeklySummary()">Send Weekly Summary</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script>
+        // Sample habits
+        const habits = [
+            { name: "Morning Jog", completed: 5, total: 7, streak: 3 },
+            { name: "Read a Book", completed: 3, total: 7, streak: 1 },
+            { name: "Meditation", completed: 6, total: 7, streak: 6 },
+            { name: "Drink Water", completed: 7, total: 7, streak: 7 }
+        ];
+
+        const habitListElement = document.getElementById('habitList');
+        const progressChartElement = document.getElementById('progressChart');
+
+        function renderHabits() {
+            habitListElement.innerHTML = '';
+            habits.forEach(habit => {
+                const habitItem = document.createElement('div');
+                habitItem.classList.add('habit-item');
+                habitItem.innerHTML = `
+                    <span>\${habit.name}</span>
+                    <div>
+                        <span>\${habit.completed}/\${habit.total}</span>
+                        <span class="streak">🔥 \${habit.streak} Day Streak</span>
+                        <i class="fas fa-bell reminder" onclick="setReminder('\${habit.name}')"></i>
+                    </div>
+                `;
+                if (habit.completed === habit.total) {
+                    habitItem.classList.add('completed');
+                }
+                habitListElement.appendChild(habitItem);
+            });
+        }
+
+        function renderChart(view) {
+            const labels = habits.map(habit => habit.name);
+            const data = habits.map(habit => habit.completed);
+
+            const chart = new Chart(progressChartElement, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: `\${view} Progress`,
+                        data: data,
+                        backgroundColor: 'rgba(0, 123, 255, 0.5)',
+                        borderColor: 'rgba(0, 123, 255, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 7
+                        }
+                    }
+                }
+            });
+        }
+
+        function switchView(view) {
+            document.querySelectorAll('.view-buttons button').forEach(button => {
+                button.classList.remove('active');
+            });
+            document.querySelector(`button[onclick="switchView('\${view}')"]`).classList.add('active');
+            renderChart(view);
+        }
+
+        function setReminder(habitName) {
+            if (Notification.permission === "granted") {
+                new Notification(`Reminder: \${habitName}`, {
+                    body: `Don't forget to complete your habit today!`,
+                    icon: 'https://cdn-icons-png.flaticon.com/512/64/64572.png'
+                });
+            } else if (Notification.permission !== "denied") {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        setReminder(habitName);
+                    }
+                });
+            } else {
+                alert(`Reminder set for \${habitName}`);
+            }
+        }
+
+        function syncWithGoogleCalendar() {
+            gapi.load('client:auth2', () => {
+                gapi.client.init({
+                    apiKey: 'YOUR\_API\_KEY',
+                    clientId: 'YOUR\_CLIENT\_ID',
+                    discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"],
+                    scope: "https://www.googleapis.com/auth/calendar.events"
+                }).then(() => {
+                    gapi.auth2.getAuthInstance().signIn().then(() => {
+                        gapi.client.calendar.events.insert({
+                            calendarId: 'primary',
+                            resource: {
+                                summary: 'Complete Your Habits',
+                                start: {
+                                    dateTime: new Date().toISOString()
+                                },
+                                end: {
+                                    dateTime: new Date(new Date().getTime() + 60 * 60 * 1000).toISOString()
+                                },
+                                description: 'Remember to complete your daily habits.'
+                            }
+                        }).then(() => {
+                            alert('Event added to Google Calendar');
+                        });
+                    });
+                });
+            });
+        }
+
+        function sendWeeklySummary() {
+            // Placeholder for sending weekly summary via email
+            // This function can be expanded by integrating with a service like EmailJS
+            alert('Weekly summary sent!');
+        }
+
+        // Initial Render
+        renderHabits();
+        renderChart('daily');
+    </script>
+</body>
+</html>

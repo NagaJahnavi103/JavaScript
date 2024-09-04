@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Habit Tracker</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* CSS remains largely the same with minor tweaks for new features */
+        .streak {
+            color: \#FFD700;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="tracker-container">
+        <!-- Previous content here -->
+        <button id="syncGoogle" onclick="syncWithGoogleCalendar()">Sync with Google Calendar</button>
+    </div>
+
+    <script>
+    // Assuming we have some user authentication mechanism in place
+    let userAuthToken = 'user\_token\_here'; // This would typically come from a login process
+
+    function syncWithGoogleCalendar() {
+        // Placeholder for Google Calendar API integration
+        if ('serviceWorker' in navigator \&\& 'SyncManager' in window) {
+            navigator.serviceWorker.ready.then(registration => {
+                // Here you would typically send habit data to your server
+                // which would then interact with Google Calendar API
+                fetch('/sync-calendar', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + userAuthToken,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({habits: habits})
+                }).then(response => {
+                    if (response.ok) {
+                        alert('Synced with Google Calendar!');
+                    }
+                });
+            });
+        } else {
+            alert('Background Sync not supported');
+        }
+    }
+
+    function setReminder(habitName) {
+        if ('Notification' in window) {
+            Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                    // Schedule a notification
+                    new Notification('Reminder', {
+                        body: `Time to \${habitName}!`
+                    });
+                }
+            });
+        }
+    }
+
+    function updateStreak(habitName) {
+        let streak = localStorage.getItem(`streak\_\${habitName}`) || 0;
+        streak = (habits.find(h => h.name === habitName).completed === 7) ? parseInt(streak) + 1 : 0;
+        localStorage.setItem(`streak\_\${habitName}`, streak);
+        // Update UI with streak information
+        // This would involve adding a streak display next to each habit
+    }
+
+    function sendWeeklySummary() {
+        // This function would typically run server-side
+        // Here's a client-side simulation:
+        const summary = habits.map(habit => `\${habit.name}: \${habit.completed}/\${habit.total}`).join('\n');
+        console.log('Weekly Summary:\n' + summary);
+        // For real implementation, you'd send this data to an email API or server endpoint
+        // fetch('/send-email', {
+        //     method: 'POST',
+        //     body: JSON.stringify({summary: summary, email: 'user@example.com'})
+        // });
+    }
+
+    // Call this function at the end of the week or on demand
+    setInterval(sendWeeklySummary, 604800000); // Weekly interval, in practice this would be server-side
+
+    // Enhance the renderHabits function to show streaks
+    function renderHabits() {
+        // Existing rendering logic...
+        habits.forEach(habit => {
+            // ... existing code ...
+            updateStreak(habit.name); // Update streak on render
+            const streak = localStorage.getItem(`streak\_\${habit.name}`);
+            habitItem.innerHTML += `<span class="streak">🔥 \${streak}</span>`;
+        });
+    }
+
+    // Initial setup
+    renderHabits();
+    // Other initialization code...
+    </script>
+</body>
+</html>
