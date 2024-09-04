@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sports Performance Analytics</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: \#f4f4f4; }
+        .container { width: 90\%; margin: auto; overflow: hidden; }
+        .chart-container { margin: 20px 0; background: white; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        canvas { max-width: 100\%; }
+        .filters { margin-bottom: 20px; }
+        .filter { margin-right: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sports Performance Analytics</h1>
+        <div class="filters">
+            <select id="playerFilter" class="filter">
+                <option value="all">All Players</option>
+                <!-- Options will be populated dynamically -->
+            </select>
+            <select id="teamFilter" class="filter">
+                <option value="all">All Teams</option>
+            </select>
+            <select id="yearFilter" class="filter">
+                <option value="all">All Years</option>
+                <option value="2017">2017</option>
+                <!-- More years... -->
+            </select>
+        </div>
+        <div class="chart-container">
+            <canvas id="lineChart"></canvas>
+        </div>
+        <div class="chart-container">
+            <canvas id="scatterPlot"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // Sample data - this should be replaced or populated with actual data
+        const sampleData = {
+            players: ['Player A', 'Player B', 'Player C'],
+            teams: ['Team NBA', 'Team MLB', 'Team EPL'],
+            years: [2017, 2018, 2019, 2020, 2021, 2022],
+            performance: {
+                'Player A': {
+                    'Team NBA': {2017: {accuracy: 85, stamina: 90, injuries: 2}, /* ... more data ... */}
+                },
+                // More player data...
+            }
+        };
+
+        // Populate filters
+        const populateFilters = () => {
+            ['player', 'team'].forEach(type => {
+                const select = document.getElementById(`\${type}Filter`);
+                sampleData[`\${type}s`].forEach(item => {
+                    const option = document.createElement("option");
+                    option.value = item;
+                    option.text = item;
+                    select.appendChild(option);
+                });
+            });
+        };
+
+        // Initialize charts
+        const ctxLine = document.getElementById('lineChart').getContext('2d');
+        const ctxScatter = document.getElementById('scatterPlot').getContext('2d');
+
+        const lineChart = new Chart(ctxLine, {
+            type: 'line',
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        title: { display: true, text: 'Year' }
+                    },
+                    y: {
+                        title: { display: true, text: 'Performance Metric' }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Value: \${context.parsed.y}`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        const scatterPlot = new Chart(ctxScatter, {
+            type: 'scatter',
+            options: {
+                scales: {
+                    x: {
+                        type: 'linear',
+                        position: 'bottom',
+                        title: { display: true, text: 'Accuracy' }
+                    },
+                    y: {
+                        title: { display: true, text: 'Stamina' }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Player: \${context.parsed.x}, Stamina: \${context.parsed.y}`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Function to update charts based on filters
+        const updateCharts = () => {
+            // Placeholder for filtering logic - this should filter sampleData based on selected filters
+            const filteredData = sampleData; // Implement actual filtering here
+
+            // Update line chart data
+            lineChart.data = {
+                labels: sampleData.years,
+                datasets: [{
+                    label: 'Performance Over Time',
+                    data: filteredData.performance['Player A']['Team NBA'], // Example data
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.1
+                }]
+            };
+            lineChart.update();
+
+            // Update scatter plot data
+            let scatterData = [];
+            for (let player in filteredData.performance) {
+                for (let year in filteredData.performance[player]) {
+                    scatterData.push({
+                        x: filteredData.performance[player][year].accuracy,
+                        y: filteredData.performance[player][year].stamina
+                    });
+                }
+            }
+            scatterPlot.data = {
+                datasets: [{
+                    label: 'Player Performance',
+                    data: scatterData,
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }]
+            };
+            scatterPlot.update();
+        };
+
+        // Event listeners for filter changes
+        document.querySelectorAll('.filter').forEach(filter => {
+            filter.addEventListener('change', updateCharts);
+        });
+
+        // Initial setup
+        populateFilters();
+        updateCharts();
+    </script>
+</body>
+</html>

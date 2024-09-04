@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sports Performance Analytics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            padding: 20px;
+        }
+        canvas {
+            max-width: 100\%;
+            margin-bottom: 20px;
+        }
+        .filter-container {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sports Performance Analytics</h1>
+        <div class="filter-container">
+            <label for="league">League:</label>
+            <select id="league">
+                <option value="all">All</option>
+                <option value="nba">NBA</option>
+                <option value="mlb">MLB</option>
+                <option value="epl">EPL</option>
+            </select>
+
+            <label for="player">Player:</label>
+            <select id="player">
+                <option value="all">All</option>
+                <option value="player1">Player 1</option>
+                <option value="player2">Player 2</option>
+                <option value="player3">Player 3</option>
+                <option value="pitcher1">Pitcher 1</option>
+                <option value="pitcher2">Pitcher 2</option>
+                <option value="playerA">Player A</option>
+                <option value="playerB">Player B</option>
+            </select>
+
+            <label for="team">Team:</label>
+            <select id="team">
+                <option value="all">All</option>
+                <option value="team1">Team 1</option>
+                <option value="team2">Team 2</option>
+                <!-- Add more team options here -->
+            </select>
+
+            <label for="year">Year:</label>
+            <select id="year">
+                <option value="all">All</option>
+                <option value="2017">2017</option>
+                <option value="2018">2018</option>
+                <option value="2019">2019</option>
+                <option value="2020">2020</option>
+                <option value="2021">2021</option>
+                <option value="2022">2022</option>
+            </select>
+        </div>
+
+        <canvas id="lineChart"></canvas>
+        <canvas id="scatterPlot"></canvas>
+    </div>
+
+    <script>
+        const data = {
+            labels: ['2017', '2018', '2019', '2020', '2021', '2022'],
+            performanceMetrics: {
+                nba: {
+                    accuracy: [0.75, 0.76, 0.77, 0.78, 0.80, 0.82],
+                    stamina: [0.65, 0.66, 0.67, 0.68, 0.70, 0.72],
+                    injuryRates: [0.12, 0.11, 0.11, 0.10, 0.09, 0.10]
+                },
+                mlb: {
+                    accuracy: [0.70, 0.71, 0.72, 0.73, 0.74, 0.75],
+                    stamina: [0.60, 0.61, 0.62, 0.63, 0.64, 0.65],
+                    injuryRates: [0.15, 0.14, 0.13, 0.12, 0.11, 0.10]
+                },
+                epl: {
+                    accuracy: [0.73, 0.74, 0.75, 0.76, 0.77, 0.78],
+                    stamina: [0.68, 0.69, 0.70, 0.71, 0.72, 0.73],
+                    injuryRates: [0.11, 0.10, 0.10, 0.09, 0.08, 0.08]
+                }
+            },
+            scatterData: {
+                nba: [
+                    { x: 0.75, y: 0.12, label: 'Player 1', value: 'player1', team: 'team1' },
+                    { x: 0.78, y: 0.11, label: 'Player 2', value: 'player2', team: 'team1' },
+                    { x: 0.80, y: 0.10, label: 'Player 3', value: 'player3', team: 'team2' }
+                ],
+                mlb: [
+                    { x: 0.72, y: 0.08, label: 'Pitcher 1', value: 'pitcher1', team: 'team2' },
+                    { x: 0.74, y: 0.07, label: 'Pitcher 2', value: 'pitcher2', team: 'team1' }
+                ],
+                epl: [
+                    { x: 0.80, y: 0.07, label: 'Player A', value: 'playerA', team: 'team1' },
+                    { x: 0.82, y: 0.06, label: 'Player B', value: 'playerB', team: 'team2' }
+                ]
+            }
+        };
+
+        const ctxLine = document.getElementById('lineChart').getContext('2d');
+        const ctxScatter = document.getElementById('scatterPlot').getContext('2d');
+
+        const lineChart = new Chart(ctxLine, {
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: []
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(tooltipItem) {
+                                return tooltipItem.dataset.label + ': ' + tooltipItem.raw.toFixed(2);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        const scatterPlot = new Chart(ctxScatter, {
+            type: 'scatter',
+            data: {
+                datasets: []
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(tooltipItem) {
+                                return tooltipItem.dataset.label + ': ' + tooltipItem.raw.x.toFixed(2) + ' (Accuracy), ' + tooltipItem.raw.y.toFixed(2) + ' (Injury Rate)';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'linear',
+                        position: 'bottom',
+                        title: {
+                            display: true,
+                            text: 'Accuracy'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Injury Rate'
+                        }
+                    }
+                }
+            }
+        });
+
+        function updateCharts() {
+            const selectedYear = document.getElementById('year').value;
+            const selectedLeague = document.getElementById('league').value;
+            const selectedPlayer = document.getElementById('player').value;
+            const selectedTeam = document.getElementById('team').value;
+
+            const startYearIndex = data.labels.indexOf('2017');
+            const endYearIndex = selectedYear !== 'all' ? data.labels.indexOf(selectedYear) : data.labels.length - 1;
+            const filteredLabels = data.labels.slice(startYearIndex, endYearIndex + 1);
+
+            const filteredData = {
+                nba: {
+                    accuracy: data.performanceMetrics.nba.accuracy.slice(startYearIndex, endYearIndex + 1),
+                    stamina: data.performanceMetrics.nba.stamina.slice(startYearIndex, endYearIndex + 1),
+                    injuryRates: data.performanceMetrics.nba.injuryRates.slice(startYearIndex, endYearIndex + 1)
+                },
+                mlb: {
+                    accuracy: data.performanceMetrics.mlb.accuracy.slice(startYearIndex, endYearIndex + 1),
+                    stamina: data.performanceMetrics.mlb.stamina.slice(startYearIndex, endYearIndex + 1),
+                    injuryRates: data.performanceMetrics.mlb.injuryRates.slice(startYearIndex, endYearIndex + 1)
+                },
+                epl: {
+                    accuracy: data.performanceMetrics.epl.accuracy.slice(startYearIndex, endYearIndex + 1),
+                    stamina: data.performanceMetrics.epl.stamina.slice(startYearIndex, endYearIndex + 1),
+                    injuryRates: data.performanceMetrics.epl.injuryRates.slice(startYearIndex, endYearIndex + 1)
+                }
+            };
+
+            lineChart.data.labels = filteredLabels;
+
+            lineChart.data.datasets = [];
+
+            if (selectedLeague === 'all' || selectedLeague === 'nba') {
+                lineChart.data.datasets.push({
+                    label: 'NBA Accuracy',
+                    data: filteredData.nba.accuracy,
+                    borderColor: 'blue',
+                    backgroundColor: 'rgba(0, 0, 255, 0.2)',
+                    fill: true
+                });
+                lineChart.data.datasets.push({
+                    label: 'NBA Stamina',
+                    data: filteredData.nba.stamina,
+                    borderColor: 'green',
+                    backgroundColor: 'rgba(0, 255, 0, 0.2)',
+                    fill: true
+                });
+                lineChart.data.datasets.push({
+                    label: 'NBA Injury Rates',
+                    data: filteredData.nba.injuryRates,
+                    borderColor: 'red',
+                    backgroundColor: 'rgba(255, 0, 0, 0.2)',
+                    fill: true
+                });
+            }
+
+            if (selectedLeague === 'all' || selectedLeague === 'mlb') {
+                lineChart.data.datasets.push({
+                    label: 'MLB Accuracy',
+                    data: filteredData.mlb.accuracy,
+                    borderColor: 'orange',
+                    backgroundColor: 'rgba(255, 165, 0, 0.2)',
+                    fill: true
+                });
+                lineChart.data.datasets.push({
+                    label: 'MLB Stamina',
+                    data: filteredData.mlb.stamina,
+                    borderColor: 'purple',
+                    backgroundColor: 'rgba(128, 0, 128, 0.2)',
+                    fill: true
+                });
+                lineChart.data.datasets.push({
+                    label: 'MLB Injury Rates',
+                    data: filteredData.mlb.injuryRates,
+                    borderColor: 'brown',
+                    backgroundColor: 'rgba(165, 42, 42, 0.2)',
+                    fill: true
+                });
+            }
+
+            if (selectedLeague === 'all' || selectedLeague === 'epl') {
+                lineChart.data.datasets.push({
+                    label: 'EPL Accuracy',
+                    data: filteredData.epl.accuracy,
+                    borderColor: 'yellow',
+                    backgroundColor: 'rgba(255, 255, 0, 0.2)',
+                    fill: true
+                });
+                lineChart.data.datasets.push({
+                    label: 'EPL Stamina',
+                    data: filteredData.epl.stamina,
+                    borderColor: 'pink',
+                    backgroundColor: 'rgba(255, 192, 203, 0.2)',
+                    fill: true
+                });
+                lineChart.data.datasets.push({
+                    label: 'EPL Injury Rates',
+                    data: filteredData.epl.injuryRates,
+                    borderColor: 'cyan',
+                    backgroundColor: 'rgba(0, 255, 255, 0.2)',
+                    fill: true
+                });
+            }
+
+            lineChart.update();
+
+            const scatterData = [];
+
+            if (selectedLeague === 'all' || selectedLeague === 'nba') {
+                scatterData.push(...data.scatterData.nba);
+            }
+
+            if (selectedLeague === 'all' || selectedLeague === 'mlb') {
+                scatterData.push(...data.scatterData.mlb);
+            }
+
+            if (selectedLeague === 'all' || selectedLeague === 'epl') {
+                scatterData.push(...data.scatterData.epl);
+            }
+
+            const filteredScatterData = scatterData.filter((player) => {
+                const matchesPlayer = selectedPlayer === 'all' || player.value === selectedPlayer;
+                const matchesTeam = selectedTeam === 'all' || player.team === selectedTeam;
+                return matchesPlayer \&\& matchesTeam;
+            });
+
+            scatterPlot.data.datasets = [{
+                label: 'Player Performance',
+                data: filteredScatterData,
+                backgroundColor: 'rgba(0, 128, 128, 0.8)',
+                borderColor: 'rgba(0, 128, 128, 1)',
+                borderWidth: 1
+            }];
+
+            scatterPlot.update();
+        }
+
+        document.getElementById('league').addEventListener('change', updateCharts);
+        document.getElementById('year').addEventListener('change', updateCharts);
+        document.getElementById('player').addEventListener('change', updateCharts);
+        document.getElementById('team').addEventListener('change', updateCharts);
+
+        updateCharts();
+    </script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sports Performance Analytics</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .chart-container {
+            width: 80\%;
+            margin: auto;
+            padding: 20px;
+        }
+        .filter-container {
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2 class="text-center">Sports Performance Analytics</h2>
+    <div class="filter-container">
+        <select id="leagueFilter" class="form-control">
+            <option value="all">All Leagues</option>
+            <option value="NBA">NBA</option>
+            <option value="MLB">MLB</option>
+            <option value="EPL">EPL</option>
+        </select>
+        <!-- Additional filters for player, team, year can be added similarly -->
+    </div>
+    <div class="chart-container">
+        <canvas id="lineChart" width="400" height="200"></canvas>
+        <canvas id="scatterPlot" width="400" height="200"></canvas>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Sample data - this should ideally be loaded from a server or a file
+    const data = {
+        // Your data here: player stats, teams, leagues, etc.
+    };
+
+    const ctxLine = document.getElementById('lineChart').getContext('2d');
+    const ctxScatter = document.getElementById('scatterPlot').getContext('2d');
+
+    function updateCharts(league = 'all') {
+        // Filter data based on selected league
+        let filteredData = data;
+        if (league !== 'all') {
+            filteredData = data.filter(d => d.league === league);
+        }
+
+        // Line Chart for trends
+        new Chart(ctxLine, {
+            type: 'line',
+            data: {
+                labels: ['2017', '2018', '2019', '2020', '2021', '2022'],
+                datasets: [{
+                    label: 'Average Accuracy',
+                    data: [/* Data points */],
+                    borderColor: 'blue',
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                tooltips: {
+                    mode: 'index',
+                    intersect: false,
+                }
+            }
+        });
+
+        // Scatter Plot for player performance
+        new Chart(ctxScatter, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Stamina vs Accuracy',
+                    data: filteredData.map(player => ({
+                        x: player.stamina,
+                        y: player.accuracy,
+                        playerName: player.name
+                    })),
+                    backgroundColor: 'red'
+                }]
+            },
+            options: {
+                tooltips: {
+                    callbacks: {
+                        label: function(tooltipItem, data) {
+                            return data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].playerName + 
+                                   ': Stamina: ' + tooltipItem.xLabel + ', Accuracy: ' + tooltipItem.yLabel;
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Initial chart rendering
+    updateCharts();
+
+    // Event listener for league filter
+    document.getElementById('leagueFilter').addEventListener('change', function() {
+        updateCharts(this.value);
+    });
+</script>
+</body>
+</html>
