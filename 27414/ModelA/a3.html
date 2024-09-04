@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Renewable Energy in Mining</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .chart-container { width: 80\%; margin: 40px auto; }
+    </style>
+</head>
+<body>
+    <div class="chart-container">
+        <canvas id="renewableEnergyChart"></canvas>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.umd.js"></script>
+    <script>
+        const ctx = document.getElementById('renewableEnergyChart').getContext('2d');
+        const myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['2019', '2020', '2021', '2022', '2023'],
+                datasets: [{
+                    label: 'Energy Generation (MW or GWh/year)',
+                    data: [0, 100, 150, 150, 150], // Example data for Rio Tinto and Codelco combined
+                    backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                    yAxisID: 'yEnergy'
+                }, {
+                    type: 'line',
+                    label: 'Cost Savings (\$M)',
+                    data: [0, 0, 30, 50, 50], // Starting from 2021 for Codelco and 2022 for Rio Tinto as per given data
+                    borderColor: 'rgb(255, 99, 132)',
+                    fill: false,
+                    yAxisID: 'yCost'
+                }]
+            },
+            options: {
+                scales: {
+                    yEnergy: {
+                        type: 'linear',
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Energy Generation'
+                        }
+                    },
+                    yCost: {
+                        type: 'linear',
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Cost Savings (\$M)'
+                        },
+                        grid: {
+                            drawOnChartArea: false,
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label === 'Energy Generation (MW or GWh/year)') {
+                                    label += ': ' + context.parsed.y + ' ' + (context.datasetIndex === 0 ? 'MW/GWh' : '\$M');
+                                } else if (label === 'Cost Savings (\$M)') {
+                                    label += ': \$' + context.parsed.y + 'M';
+                                }
+                                return label;
+                            },
+                            afterBody: function(tooltipItems) {
+                                let energyDetails = '';
+                                if (tooltipItems[0].dataIndex === 1) {
+                                    energyDetails = 'Solar Panels at Rio Tinto, reducing diesel usage by 20\%';
+                                } else if (tooltipItems[0].dataIndex >= 2) {
+                                    energyDetails = 'Wind Turbines at Codelco, cutting emissions by 10\%';
+                                }
+                                return energyDetails;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

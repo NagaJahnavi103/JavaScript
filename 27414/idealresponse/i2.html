@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Renewable Energy in Mining Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.5.1/dist/chart.min.css">
+    <style>
+        body { font-family: 'Arial', sans-serif; }
+        \#dashboard { width: 90\%; margin: 20px auto; }
+        canvas { margin-top: 20px; }
+    </style>
+</head>
+<body>
+<div id="dashboard">
+    <canvas id="renewableEnergyChart" width="400" height="200"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1"></script>
+<script>
+    const ctx = document.getElementById('renewableEnergyChart').getContext('2d');
+
+    const data = {
+        labels: [2019, 2020, 2021, 2022, 2023],
+        datasets: [{
+            label: 'Solar Energy Generation (MW)',
+            data: [0, 100, 100, 100, 100],
+            backgroundColor: 'rgba(255, 159, 64, 0.5)',
+            type: 'bar',
+            yAxisID: 'yEnergy'
+        }, {
+            label: 'Wind Energy Generation (GWh/year)',
+            data: [0, 0, 150, 150, 150],
+            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+            type: 'bar',
+            yAxisID: 'yEnergy'
+        }, {
+            label: 'Hydro Energy Generation (MW)',
+            data: [0, 0, 0, 0, 0],
+            backgroundColor: 'rgba(75, 192, 192, 0.5)',
+            type: 'bar',
+            yAxisID: 'yEnergy'
+        }, {
+            label: 'Solar Cost Savings (\$M)',
+            data: [0, 50, 50, 50, 50],
+            borderColor: 'rgba(255, 159, 64, 1)',
+            type: 'line',
+            fill: false,
+            yAxisID: 'ySavings'
+        }, {
+            label: 'Wind Cost Savings (\$M)',
+            data: [0, 0, 30, 30, 30],
+            borderColor: 'rgba(54, 162, 235, 1)',
+            type: 'line',
+            fill: false,
+            yAxisID: 'ySavings'
+        }, {
+            label: 'Hydro Cost Savings (\$M)',
+            data: [30, 30, 30, 30, 30],
+            borderColor: 'rgba(75, 192, 192, 1)',
+            type: 'line',
+            fill: false,
+            yAxisID: 'ySavings'
+        }]
+    };
+
+    const options = {
+        responsive: true,
+        interaction: {
+            mode: 'index',
+            intersect: false,
+        },
+        plugins: {
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        let label = context.dataset.label || '';
+                        if (label.includes('Cost Savings')) {
+                            return `\${label}: \$\${context.parsed.y}M`;
+                        }
+                        return `\${label}: \${context.parsed.y}`;
+                    }
+                }
+            }
+        },
+        scales: {
+            yEnergy: {
+                type: 'linear',
+                display: true,
+                position: 'left',
+                title: { display: true, text: 'Energy Generation' }
+            },
+            ySavings: {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                title: { display: true, text: 'Cost Savings (\$M)' },
+                grid: {
+                    drawOnChartArea: false,
+                }
+            }
+        }
+    };
+
+    const chart = new Chart(ctx, {
+        type: 'bar',
+        data: data,
+        options: options
+    });
+
+</script>
+</body>
+</html>
