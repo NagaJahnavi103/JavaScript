@@ -3,95 +3,174 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Donation Tracker</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css">
+<title>Seat Booking System</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <style>
-    .fundraising-item { margin-bottom: 10px; }
-    .progress { margin-top: 20px; }
-    .leaderboard { width: 25%; float: right; margin-left: 20px; }
+    body { font-family: 'Arial', sans-serif; background: #f4f4f9; margin: 0; padding: 20px; }
+    .container { max-width: 600px; margin: 40px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    form { display: grid; gap: 15px; }
+    label { font-weight: bold; }
+    select, input, button { padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px; }
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; }
+    button { background-color: #5cb85c; color: white; border: none; cursor: pointer; }
+    button:disabled { background-color: #cccccc; cursor: not-allowed; }
+    #confirmation { background: #e9f7ef; border-left: 4px solid #4CAF50; padding: 10px; margin-top: 20px; display: none; }
+    #bookNow { margin-top: 10px; }
 </style>
 </head>
 <body>
 
-<button class="btn btn-primary" onclick="addFundraisingItem()">Add Fundraising Item</button>
-<div id="fundraisingList">
-    <p>No fundraising items created yet.</p>
-</div>
+<div class="container">
+    <form id="bookingForm">
+        <label for="bookingFor">Booking For:</label>
+        <select id="bookingFor">
+            <option value="me">For Me</option>
+            <option value="others">For Others</option>
+        </select>
+        <button id="employeeName" type="button" style="display: none;">Display Employee Name</button>
 
-<!-- Modal for contribution -->
-<div class="modal fade" id="contributionModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Make a Contribution</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <input type="text" id="contributorName" placeholder="Your Name">
-                <input type="number" id="contributionAmount" placeholder="Amount">
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" onclick="makeContribution()">Contribute</button>
-            </div>
+        <label>Booking Type:</label>
+        <div>
+            <input type="radio" id="hybrid" name="bookingType" value="hybrid">
+            <label for="hybrid">Hybrid</label>
+            <input type="radio" id="hotDesk" name="bookingType" value="hotDesk">
+            <label for="hotDesk">Hot Desk</label>
         </div>
+
+        <label for="city">Select City:</label>
+        <select id="city">
+            <option value="">Choose a City</option>
+            <option value="hyderabad">Hyderabad</option>
+            <option value="newYork">New York</option>
+            <option value="newJersey">New Jersey</option>
+            <option value="washington">Washington</option>
+        </select>
+
+        <label for="campus">Select Campus:</label>
+        <select id="campus" disabled></select>
+
+        <label for="building">Select Building:</label>
+        <select id="building" disabled></select>
+
+        <label for="floor">Select Floor:</label>
+        <select id="floor" disabled></select>
+
+        <label for="dateRange">Select Date Range:</label>
+        <input type="text" id="dateRange" placeholder="Select date range" readonly>
+
+        <label>Select Days:</label>
+        <div id="dayCheckboxes" class="checkbox-group"></div>
+
+        <button type="button" id="proceedButton" disabled>Proceed to Book a Seat</button>
+    </form>
+
+    <div id="confirmation">
+        <p>Your seat has been booked! Details:</p>
+        <button id="bookNow" type="button">Book Now</button>
     </div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
-let fundraisingItems = [];
-let currentFundraisingId = -1;
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('bookingForm');
+    const proceedButton = document.getElementById('proceedButton');
+    const city = document.getElementById('city');
+    const campus = document.getElementById('campus');
+    const building = document.getElementById('building');
+    const floor = document.getElementById('floor');
+    const bookingFor = document.getElementById('bookingFor');
+    const employeeNameButton = document.getElementById('employeeName');
+    const dateRange = document.getElementById('dateRange');
+    const dayCheckboxes = document.getElementById('dayCheckboxes');
+    const confirmation = document.getElementById('confirmation');
+    const bookNow = document.getElementById('bookNow');
 
-function addFundraisingItem() {
-    // Simulate creating a new item. In a real app, this would involve server interaction.
-    const newItem = {
-        name: 'New Fundraiser',
-        description: 'This is a new fundraising item',
-        goal: 1000,
-        raised: 0,
-        contributors: [],
-        image: 'default-image.jpg'
+    // Mock data for campuses, buildings, and floors
+    const locations = {
+        hyderabad: {campuses: ['Tech Park', 'SkyView'], buildings: {'Tech Park': ['A', 'B'], 'SkyView': ['C']}, floors: {'A': [1,2], 'B': [3,4], 'C': [5,6]}},
+        newYork: {campuses: ['Downtown', 'Midtown'], buildings: {'Downtown': ['E'], 'Midtown': ['F']}, floors: {'E': [7,8], 'F': [9,10]}},
+        newJersey: {campuses: ['River Edge'], buildings: {'River Edge': ['G']}, floors: {'G': [11,12]}},
+        washington: {campuses: ['Capitol Hill'], buildings: {'Capitol Hill': ['H']}, floors: {'H': [13,14]}}
     };
-    fundraisingItems.push(newItem);
-    updateFundraisingList();
-}
 
-function updateFundraisingList() {
-    const listHtml = fundraisingItems.map((item, index) => {
-        return `
-            <div class="fundraising-item">
-                <img src="${item.image}" alt="${item.name}" width="60">
-                <span>${item.name} - Goal: $${item.goal}</span>
-                <button class="btn btn-sm btn-info" onclick="showContributionModal(${index})">Contribute</button>
-            </div>
-        `;
-    }).join('');
-    document.getElementById('fundraisingList').innerHTML = fundraisingItems.length ? listHtml : '<p>No fundraising items created yet.</p>';
-}
+    // Dynamic dropdown updates
+    city.onchange = function() {
+        const selectedCity = this.value;
+        campus.innerHTML = '<option value="">Choose a Campus</option>' + locations[selectedCity].campuses.map(c => `<option value="$ {c}"> ${c}</option>`).join('');
+        campus.disabled = false;
+        building.disabled = true;
+        floor.disabled = true;
+        building.innerHTML = ''; floor.innerHTML = '';
+    };
 
-function showContributionModal(index) {
-    currentFundraisingId = index;
-    $('#contributionModal').modal('show');
-}
+    campus.onchange = function() {
+        const selectedCampus = this.value;
+        const cityData = locations[city.value];
+        building.innerHTML = '<option value="">Choose a Building</option>' + cityData.buildings[selectedCampus].map(b => `<option value="$ {b}"> ${b}</option>`).join('');
+        building.disabled = false;
+        floor.disabled = true;
+        floor.innerHTML = '';
+    };
 
-function makeContribution() {
-    const name = document.getElementById('contributorName').value;
-    const amount = parseFloat(document.getElementById('contributionAmount').value);
-    if (name && amount > 0) {
-        fundraisingItems[currentFundraisingId].raised += amount;
-        fundraisingItems[currentFundraisingId].contributors.push({ name, amount });
-        $('#contributionModal').modal('hide');
-        updateFundraisingList();
-        // In a real application, you would now sync this data with your server.
+    building.onchange = function() {
+        const selectedBuilding = this.value;
+        const floors = locations[city.value].floors[selectedBuilding];
+        floor.innerHTML = '<option value="">Choose a Floor</option>' + floors.map(f => `<option value="$ {f}"> ${f}</option>`).join('');
+        floor.disabled = false;
+    };
+
+    // Date range picker
+    flatpickr("#dateRange", {
+        mode: "range",
+        minDate: "today",
+        onChange: function(selectedDates) {
+            updateDayCheckboxes(selectedDates);
+            checkFormCompletion();
+        }
+    });
+
+    function updateDayCheckboxes(dates) {
+        dayCheckboxes.innerHTML = '';
+        if(dates.length === 2) {
+            let currentDate = new Date(dates[0]);
+            while(currentDate <= dates[1]) {
+                const dayName = currentDate.toLocaleDateString('en-US', {weekday: 'long'});
+                dayCheckboxes.innerHTML += `<input type="checkbox" id="$ {dayName}" name="days" value=" ${dayName}"><label for="$ {dayName}"> ${dayName}</label>`;
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+        }
     }
-}
 
-// Additional functions for viewing item details and updating progress bar would be implemented here.
+    // Check form completion
+    form.onchange = checkFormCompletion;
+
+    function checkFormCompletion() {
+        const isComplete = [...form.elements].every(el => {
+            if (el.type === 'radio' || el.type === 'checkbox') return el.checked;
+            if (el.tagName === 'SELECT') return el.value !== '';
+            return true; // for other types like buttons
+        });
+        proceedButton.disabled = !isComplete;
+    }
+
+    // Employee name button
+    bookingFor.onchange = function() {
+        employeeNameButton.style.display = this.value === 'others' ? 'block' : 'none';
+    };
+
+    // Proceed button action
+    proceedButton.onclick = function() {
+        confirmation.style.display = 'block';
+        const bookingRef = 'REF' + Math.floor(Math.random() * 10000);
+        confirmation.innerHTML = `<p>Your seat has been booked! Details:</p><p>Booking Reference: \${bookingRef}</p>`;
+    };
+
+    // Mock book now functionality
+    bookNow.onclick = function() {
+        alert('Booking confirmed!'); // Here you would typically send data to the server
+    };
+});
 </script>
-
 </body>
 </html>

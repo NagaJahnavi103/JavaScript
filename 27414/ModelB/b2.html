@@ -2,123 +2,113 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Esports vs Traditional Sports Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css" rel="stylesheet"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meat Management Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { font-family: 'Arial', sans-serif; margin: 0; padding: 20px; }
-        .chart-container { width: 90\%; margin: 20px auto; }
-        .filters { margin-bottom: 20px; }
+        body { font-family: 'Arial', sans-serif; }
+        .dashboard { display: grid; gap: 20px; padding: 20px; }
+        .card { box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .chart-container { width: 100%; height: 300px; }
+        @media (max-width: 768px) {
+            .dashboard { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
-    <div class="dashboard">
-        <h1>Esports vs Traditional Sports Viewership \& Growth</h1>
-        <div class="filters">
-            <select id="gameTitleFilter">
-                <option value="all">All Titles</option>
-                <option value="LoL">League of Legends</option>
-                <option value="Dota2">Dota 2</option>
-                <option value="CSGO">CS:GO</option>
-            </select>
-            <select id="yearFilter">
-                <option value="all">All Years</option>
-                <!-- Options will be dynamically added -->
-            </select>
-        </div>
-        <div class="chart-container">
-            <canvas id="esportsChart"></canvas>
+
+<div class="container-fluid dashboard">
+    <!-- Inventory Visualization -->
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Inventory Overview</h5>
+            <canvas id="inventoryChart" class="chart-container"></canvas>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.umd.js"></script>
-    <script>
-        const ctx = document.getElementById('esportsChart').getContext('2d');
-        const chartData = {
-            labels: ['2017', '2018', '2019', '2020', '2021', '2022'],
+    <!-- Supply Chain Timeline -->
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Supply Chain Timeline</h5>
+            <div id="ganttChart"></div>
+        </div>
+    </div>
+
+    <!-- Demand Forecasting -->
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Demand Forecast</h5>
+            <canvas id="forecastChart" class="chart-container"></canvas>
+        </div>
+    </div>
+
+    <!-- Quality Control -->
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Quality Control Metrics</h5>
+            <div id="qualityMetrics"></div>
+        </div>
+    </div>
+
+    <!-- IoT Monitoring -->
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Storage Conditions</h5>
+            <div id="iotMonitor"></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gantt-schedule-timeline-calendar@3.10.1/dist/gstc.umd.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Mock data for demonstration
+        const inventoryData = {
+            labels: ['Beef', 'Pork', 'Chicken', 'Lamb'],
             datasets: [{
-                type: 'bar',
-                label: 'Viewership (Millions)',
-                data: [null, 99.6, null, null, null, null], // Only LoL data for example
-                backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1,
-                categoryPercentage: 0.5
-            }, {
-                type: 'line',
-                label: 'Prize Pool (Millions \$)',
-                data: [null, 25.5, null, null, null, 40],
-                borderColor: 'rgba(255, 99, 132, 1)',
-                fill: false
-            }, {
-                type: 'line',
-                label: 'Professional Players (CS:GO)',
-                data: [7143, 7500, 8000, 8500, 10000, null], // Data approximated for demonstration
-                borderColor: 'rgba(75, 192, 192, 1)',
-                fill: false
+                data: [300, 250, 400, 150],
+                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0']
             }]
         };
 
-        let myChart = new Chart(ctx, {
-            type: 'bar',
-            data: chartData,
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Count/Viewership'
-                        }
-                    }
-                },
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                if (context.parsed.y !== null) {
-                                    label += context.parsed.y + (context.dataset.label === 'Viewership (Millions)' ? 'M viewers' : (context.dataset.label.includes('Prize Pool') ? 'M \$' : ' players'));
-                                }
-                                return label;
-                            }
-                        }
-                    }
-                }
-            }
+        // Chart.js for Inventory
+        new Chart(document.getElementById('inventoryChart'), {
+            type: 'doughnut',
+            data: inventoryData,
+            options: { responsive: true }
         });
 
-        // Function to populate year options dynamically
-        function populateYears() {
-            const yearSelect = document.getElementById('yearFilter');
-            chartData.labels.forEach(year => {
-                let option = document.createElement('option');
-                option.value = year;
-                option.text = year;
-                yearSelect.appendChild(option);
-            });
-        }
+        // Gantt Chart for Supply Chain (basic setup, needs integration with real data)
+        let gstc = GSTC({
+            element: document.getElementById('ganttChart'),
+            plugins: [],
+            state: GSTC.api.stateFromConfig({ /* config here */ })
+        });
 
-        // Function to update chart
-        function updateChart() {
-            const game = document.getElementById('gameTitleFilter').value;
-            const year = document.getElementById('yearFilter').value;
+        // Demand Forecasting Chart (using Chart.js)
+        new Chart(document.getElementById('forecastChart'), {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+                datasets: [{
+                    label: 'Forecast',
+                    data: [12, 19, 3, 5, 2],
+                    borderColor: 'blue',
+                    fill: false
+                }]
+            },
+            options: { responsive: true }
+        });
 
-            myChart.data.datasets.forEach(dataset => {
-                dataset.hidden = !((game === 'all' || dataset.label.includes(game)) \&\& 
-                                  (year === 'all' || dataset.data[chartData.labels.indexOf(year)] !== null));
-            });
-            myChart.update();
-        }
+        // Quality Control and IoT would typically require backend integration for real-time data
+        // Placeholder for quality metrics and IoT
+        document.getElementById('qualityMetrics').innerText = "Quality metrics would be displayed here.";
+        document.getElementById('iotMonitor').innerText = "IoT monitoring data would be shown here.";
+    });
+</script>
 
-        populateYears();
-        document.getElementById('gameTitleFilter').addEventListener('change', updateChart);
-        document.getElementById('yearFilter').addEventListener('change', updateChart);
-
-        // Initial chart update
-        updateChart();
-    </script>
 </body>
 </html>

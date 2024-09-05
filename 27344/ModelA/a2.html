@@ -1,148 +1,163 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Donation Tracker</title>
-    <style>
-        /* Adding some basic styling for toast messages */
-        .toast {
-            visibility: hidden;
-            min-width: 250px;
-            margin-left: -125px;
-            background-color: #333;
-            color: #fff;
-            text-align: center;
-            border-radius: 2px;
-            padding: 16px;
-            position: fixed;
-            z-index: 1;
-            left: 50%;
-            bottom: 30px;
-        }
-        .toast.show {
-            visibility: visible;
-            -webkit-animation: fadein 0.5s, fadeout 0.5s 4.5s;
-            animation: fadein 0.5s, fadeout 0.5s 4.5s;
-        }
-        @-webkit-keyframes fadein {
-            from {bottom: 0; opacity: 0;}
-            to {bottom: 30px; opacity: 1;}
-        }
-        @keyframes fadein {
-            from {bottom: 0; opacity: 0;}
-            to {bottom: 30px; opacity: 1;}
-        }
-        @-webkit-keyframes fadeout {
-            from {bottom: 30px; opacity: 1;}
-            to {bottom: 0; opacity: 0;}
-        }
-        @keyframes fadeout {
-            from {bottom: 30px; opacity: 1;}
-            to {bottom: 0; opacity: 0;}
-        }
-        /* Existing styles... */
-    </style>
+<meta charset="UTF-8">
+<title>Seat Booking</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    body { font-family: Arial, sans-serif; }
+    .container { width: 500px; margin: 50px auto; }
+    .form-group { margin: 10px 0; }
+    select, input, button { width: 100%; padding: 10px; }
+    #daysSelect { display: none; }
+    #proceedBtn { background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+    #proceedBtn:disabled { background-color: #cccccc; cursor: not-allowed; }
+    #confirmation { margin-top: 20px; padding: 10px; background: #e9ffe9; border-left: 4px solid #4CAF50; display: none; }
+</style>
 </head>
 <body>
-    <!-- Adding toast container -->
-    <div id="toast" class="toast">Contribution added successfully!</div>
 
-    <!-- Existing HTML... -->
+<div class="container">
+    <div class="form-group">
+        <label>Booking For:</label>
+        <select id="bookingFor">
+            <option value="me">For Me</option>
+            <option value="others">For Others</option>
+        </select>
+        <button id="displayEmployee" style="display:none;">Display Employee Name</button>
+    </div>
+    <div class="form-group">
+        <label>Booking Type:</label>
+        <input type="radio" id="hybrid" name="bookingType" value="hybrid" checked> <label for="hybrid">Hybrid</label>
+        <input type="radio" id="hotdesk" name="bookingType" value="hotdesk"> <label for="hotdesk">Hot Desk</label>
+    </div>
+    <div class="form-group">
+        <label>Select City:</label>
+        <select id="city"></select>
+    </div>
+    <div class="form-group" id="campusGroup" style="display: none;">
+        <label>Select Campus:</label>
+        <select id="campus"></select>
+    </div>
+    <div class="form-group" id="buildingGroup" style="display: none;">
+        <label>Select Building:</label>
+        <select id="building"></select>
+    </div>
+    <div class="form-group" id="floorGroup" style="display: none;">
+        <label>Select Floor:</label>
+        <select id="floor"></select>
+    </div>
+    <div class="form-group">
+        <label>Select Date Range:</label>
+        <input type="text" id="dateRange" placeholder="Select dates">
+    </div>
+    <div class="form-group" id="daysSelect">
+        <label>Select Days:</label>
+        <div id="daysCheckbox"></div>
+    </div>
+    <button id="proceedBtn" disabled>Proceed to Book a Seat</button>
+    <div id="confirmation"></div>
+</div>
 
-    <script>
-        // ... (previous JavaScript code)
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+\$(document).ready(function() {
+    const cities = ['Hyderabad', 'New York', 'New Jersey', 'Washington'];
+    const campuses = {'Hyderabad': ['Tech Park'], 'New York': ['NY Tower'], 'New Jersey': ['NJ Center'], 'Washington': ['DC Hub']};
+    const buildings = {'Tech Park': ['Building A'], 'NY Tower': ['Tower 1'], 'NJ Center': ['Center B'], 'DC Hub': ['Hub C']};
+    const floors = {'Building A': ['1st', '2nd'], 'Tower 1': ['5th'], 'Center B': ['3rd', '4th'], 'Hub C': ['Ground']};
 
-        // Adding toast functionality
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.className = "toast show";
-            setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 5000);
+    // Populate cities
+    cities.forEach(city => \$("#city").append(new Option(city, city)));
+
+    \$("#city").on('change', function() {
+        let city = \$(this).val();
+        \$("#campus").empty().append(new Option('Select Campus', ''));
+        \$("#building, #floor").empty().closest('.form-group').hide();
+        if (city) {
+            campuses[city].forEach(campus => \$("#campus").append(new Option(campus, campus)));
+            \$("#campusGroup").show();
+        } else {
+            \$("#campusGroup").hide();
         }
+    });
 
-        function render() {
-            const content = document.getElementById('content');
-            const showAll = document.getElementById('filter').checked;
-            content.innerHTML = '';
+    \$("#campus").on('change', function() {
+        let campus = \$(this).val();
+        \$("#building").empty().append(new Option('Select Building', ''));
+        if (campus) {
+            buildings[campus].forEach(building => \$("#building").append(new Option(building, building)));
+            \$("#buildingGroup").show();
+        } else {
+            \$("#buildingGroup").hide();
+        }
+    });
 
-            if (view === 'list') {
-                content.innerHTML += `
-                    <h1>Donation Tracker</h1>
-                    <label><input type="checkbox" id="filter" onclick="render()"> Show all?</label>
-                    <button class="button" onclick="showAddFundraiserModal()">Add Fundraising Item</button>
-                    <div id="fundraising-list"></div>
-                `;
-                renderFundraisers(showAll);
-            } else if (view === 'detail') {
-                const fundraiser = fundraisers[currentFundraiserIndex];
-                const progressPercent = (fundraiser.raised / fundraiser.goal) * 100;
-                content.innerHTML += `
-                    <div class="details-container">
-                        <div class="details-content">
-                            <h1>${fundraiser.name}</h1>
-                            <div class="progress-bar">
-                                <div class="progress" style="width: ${progressPercent}%;"></div>
-                            </div>
-                            <p>Progress: ${progressPercent.toFixed(2)}%</p>
-                            <img src="${fundraiser.image}" alt="${fundraiser.name}" style="width: 100%; max-height: 300px; object-fit: cover; border-radius: 10px;">
-                            <p>${fundraiser.description}</p>
-                            <p><strong>Goal:</strong> $${fundraiser.goal}</p>
-                            <p><strong>Raised:</strong> $${fundraiser.raised}</p>
-                            <button class="button" onclick="showContributionModal(${currentFundraiserIndex})">Contribute</button>
-                            <button class="button" onclick="goBack()">Back</button>
-                        </div>
-                        <div class="leaderboard">
-                            <h2>Leaderboard</h2>
-                            ${fundraiser.contributors
-                                .sort((a, b) => b.amount - a.amount)
-                                .slice(0, 5)
-                                .map(contributor => `<p>${contributor.name}: $${contributor.amount}</p>`)
-                                .join('')}
-                        </div>
-                    </div>
-                `;
+    \$("#building").on('change', function() {
+        let building = \$(this).val();
+        \$("#floor").empty().append(new Option('Select Floor', ''));
+        if (building) {
+            floors[building].forEach(floor => \$("#floor").append(new Option(floor, floor)));
+            \$("#floorGroup").show();
+        } else {
+            \$("#floorGroup").hide();
+        }
+    });
+
+    flatpickr("#dateRange", {
+        mode: "range",
+        minDate: "today",
+        onChange: function(selectedDates, dateStr) {
+            if(selectedDates.length == 2) {
+                populateDays(selectedDates[0], selectedDates[1]);
             }
         }
+    });
 
-        function renderFundraisers(showAll) {
-            const fundraisingList = document.getElementById('fundraising-list');
-            fundraisingList.innerHTML = '';
-
-            const filteredFundraisers = showAll ? fundraisers : fundraisers.filter(f => f.raised < f.goal);
-
-            if (filteredFundraisers.length === 0) {
-                fundraisingList.innerHTML = '<p>No fundraising items match the current filter.</p>';
-            } else {
-                filteredFundraisers.forEach((fundraiser, index) => {
-                    fundraisingList.innerHTML += `
-                        <div class="fundraising-item">
-                            <img src="${fundraiser.image}" alt="${fundraiser.name}">
-                            <div class="fundraising-details" onclick="viewFundraiser(${index})">
-                                <h3>${fundraiser.name}</h3>
-                                <p>Goal: $${fundraiser.goal}</p>
-                            </div>
-                            <button class="button" onclick="showContributionModal(${index})">Contribute</button>
-                        </div>
-                    `;
-                });
-            }
+    function populateDays(start, end) {
+        let days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        let currentDate = new Date(start);
+        \$('#daysCheckbox').empty();
+        while(currentDate <= end) {
+            let day = days[currentDate.getDay()];
+            $ ('#daysCheckbox').append(`<input type="checkbox" id=" ${day}" value="$ {day}"><label for=" ${day}">\${day}</label>`);
+            currentDate.setDate(currentDate.getDate() + 1);
         }
+        \$('#daysSelect').show();
+    }
 
-        function makeContribution() {
-            const name = document.getElementById('contributorName').value;
-            const amount = parseFloat(document.getElementById('contributionAmount').value);
+    // Enable proceed button only if all fields are set
+    \$('select, input').on('change input', function() {
+        let isValid = \$("#bookingFor").val() && \$("input[name='bookingType']:checked").length && 
+                      \$("#city").val() && \$("#campus").val() && \$("#building").val() && 
+                      \$("#floor").val() && \$("#dateRange").val() && 
+                      \$('input[type="checkbox"]:checked').length > 0;
+        \$('#proceedBtn').prop('disabled', !isValid);
+    });
 
-            if (currentFundraiserIndex !== null && name && amount) {
-                fundraisers[currentFundraiserIndex].raised += amount;
-                fundraisers[currentFundraiserIndex].contributors.push({ name, amount });
-                render();
-                hideContributionModal();
-                showToast('Contribution added successfully!');
-            }
+    \$('#proceedBtn').on('click', function() {
+        // Here you would typically send data to server, but for this example:
+        let confirmationMessage = "Booking confirmed for " + \$("#bookingFor").val() + " at " + 
+                                  \$("#building").val() + ", " + \$("#floor").val() + " from " + 
+                                  \$("#dateRange").val() + " for selected days.";
+        \$('#confirmation').html(confirmationMessage).append('<br><button onclick="bookNow()">Book Now</button>').show();
+    });
+
+    function bookNow() {
+        // Logic to finalize booking, for now just an alert
+        alert('Booking Processed! Here you would handle actual seat booking.');
+    }
+
+    <INLINE_MATH>('#bookingFor').on('change', function() {
+        if (</INLINE_MATH>(this).val() === 'others') {
+            \$('#displayEmployee').show();
+        } else {
+            \$('#displayEmployee').hide();
         }
+    });
+});
+</script>
 
-        // ... (remaining JavaScript code)
-    </script>
 </body>
 </html>
