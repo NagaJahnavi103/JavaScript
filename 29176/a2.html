@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Educational Insights Dashboard</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+<style>
+    body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f4f4f9;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    .dashboard {
+        display: flex;
+    }
+    .sidebar {
+        width: 250px;
+        background: #333;
+        color: white;
+        height: 100vh;
+        position: sticky;
+        top: 0;
+    }
+    .sidebar ul {
+        list-style: none;
+        padding: 0;
+    }
+    .sidebar li {
+        padding: 15px;
+        border-bottom: 1px solid #555;
+    }
+    .sidebar li:hover {
+        background: #555;
+    }
+    .main-content {
+        flex-grow: 1;
+        padding: 20px;
+    }
+    .header {
+        background: #fff;
+        padding: 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    .widget {
+        background: white;
+        margin: 20px 0;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        transition: transform .2s;
+    }
+    .widget:hover {
+        transform: translateY(-5px);
+    }
+    .filter {
+        margin-bottom: 10px;
+    }
+    canvas {
+        max-width: 100%;
+    }
+    @media (max-width: 768px) {
+        .dashboard {
+            flex-direction: column;
+        }
+        .sidebar {
+            width: 100%;
+            height: auto;
+            position: relative;
+        }
+    }
+</style>
+</head>
+<body>
+<div class="dashboard">
+    <nav class="sidebar">
+        <ul>
+            <li>Overview</li>
+            <li>Grades</li>
+            <li>Students</li>
+            <li>Statistics</li>
+        </ul>
+    </nav>
+    <div class="main-content">
+        <header class="header">
+            <h1>Educational Insights Dashboard</h1>
+            <p>A comprehensive view of student performance and educational statistics.</p>
+        </header>
+        <div class="widget">
+            <h2>Student Grades Distribution</h2>
+            <div class="filter">
+                <label>Filter by Subject: </label>
+                <select id="gradeFilter">
+                    <option value="all">All Subjects</option>
+                    <!-- Options will be populated dynamically -->
+                </select>
+            </div>
+            <canvas id="barChart"></canvas>
+        </div>
+        <div class="widget">
+            <h2>Grade Categories</h2>
+            <canvas id="pieChart"></canvas>
+        </div>
+        <div class="widget">
+            <h2>Average Grades Over Time</h2>
+            <div class="filter">
+                <label>Filter by Student: </label>
+                <select id="studentFilter">
+                    <option value="all">All Students</option>
+                    <!-- Options will be populated dynamically -->
+                </select>
+            </div>
+            <canvas id="lineGraph"></canvas>
+        </div>
+        <div class="widget">
+            <h2>Top Students</h2>
+            <table id="studentTable" style="width:100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th>Name</th><th>Subject</th><th>Grade</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+        const subjects = ['Math', 'Science', 'English', 'History', 'Art'];
+        const students = ['John Doe', 'Jane Smith', 'Alice Johnson', 'Bob Brown', 'Charlie Davis'];
+        
+        // Dummy data generation
+        const generateRandomGrade = () => Math.floor(Math.random() * (100 - 50 + 1)) + 50;
+        const gradesData = subjects.map(subject => ({
+            subject: subject,
+            grades: students.map(student => ({student: student, grade: generateRandomGrade()}))
+        }));
+
+        const gradesDistribution = gradesData.flatMap(data => data.grades.map(g => g.grade));
+        const gradeCategories = {A: 0, B: 0, C: 0, D: 0, F: 0};
+        gradesDistribution.forEach(grade => {
+            if (grade >= 90) gradeCategories.A++;
+            else if (grade >= 80) gradeCategories.B++;
+            else if (grade >= 70) gradeCategories.C++;
+            else if (grade >= 60) gradeCategories.D++;
+            else gradeCategories.F++;
+        });
+
+        const barChartCtx = document.getElementById('barChart').getContext('2d');
+        const pieChartCtx = document.getElementById('pieChart').getContext('2d');
+        const lineGraphCtx = document.getElementById('lineGraph').getContext('2d');
+
+        const barChart = new Chart(barChartCtx, {
+            type: 'bar',
+            data: {
+                labels: subjects,
+                datasets: [{
+                    label: 'Average Grade',
+                    data: gradesData.map(d => d.grades.reduce((sum, g) => sum + g.grade, 0) / d.grades.length),
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Average Grade: ${context.parsed.y}`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        const pieChart = new Chart(pieChartCtx, {
+            type: 'pie',
+            data: {
+                labels: Object.keys(gradeCategories),
+                datasets: [{
+                    data: Object.values(gradeCategories),
+                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'],
+                    hoverOffset: 4
+                }]
+            }
+        });
+
+        const lineGraph = new Chart(lineGraphCtx, {
+            type: 'line',
+            data: {
+                labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+                datasets: [{
+                    label: 'Average Grade',
+                    data: [75, 78, 82, 80], // Example data
+                    fill: false,
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+
+        // Populate filters
+        const gradeFilter = document.getElementById('gradeFilter');
+        subjects.forEach(subject => {
+            const option = document.createElement('option');
+            option.value = subject;
+            option.textContent = subject;
+            gradeFilter.appendChild(option);
+        });
+
+        const studentFilter = document.getElementById('studentFilter');
+        students.forEach(student => {
+            const option = document.createElement('option');
+            option.value = student;
+            option.textContent = student;
+            studentFilter.appendChild(option);
+        });
+
+        // Table population
+        const tableBody = document.querySelector('#studentTable tbody');
+        gradesData.forEach(subjectData => {
+            subjectData.grades.sort((a, b) => b.grade - a.grade).slice(0, 10).forEach((grade, index) => {
+                const row = tableBody.insertRow();
+                row.insertCell(0).textContent = grade.student;
+                row.insertCell(1).textContent = subjectData.subject;
+                row.insertCell(2).textContent = grade.grade;
+            });
+        });
+
+        // Filters functionality
+        gradeFilter.onchange = function() {
+            const subject = this.value === 'all' ? subjects : [this.value];
+            barChart.data.labels = subject;
+            barChart.data.datasets[0].data = subject.map(s => 
+                gradesData.find(d => d.subject === s).grades.reduce((sum, g) => sum + g.grade, 0) / 
+                gradesData.find(d => d.subject === s).grades.length
+            );
+            barChart.update();
+        };
+
+        studentFilter.onchange = function() {
+            const student = this.value === 'all' ? 'Average Grade' : this.value + "'s Grade";
+            lineGraph.data.datasets[0].label = student;
+            // Here you would update the data based on the student, this is a placeholder
+            lineGraph.data.datasets[0].data = [75, 78, 82, 80]; // Update with actual data
+            lineGraph.update();
+        };
+    });
+</script>
+</body>
+</html>

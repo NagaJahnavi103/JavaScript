@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Educational Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Arial', sans-serif; }
+        .chart-container { width: 100%; height: 300px; }
+        .sidebar { height: 100vh; position: sticky; top: 0; }
+        .filter { margin: 10px 0; }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+<div class="container mx-auto grid grid-cols-12 gap-4 p-4">
+    <!-- Sidebar -->
+    <div class="col-span-2 bg-white shadow rounded p-4 sidebar">
+        <h2 class="text-xl font-semibold mb-4">Navigation</h2>
+        <ul class="space-y-2">
+            <li><a href="#grades" class="text-blue-500 hover:underline">Grades</a></li>
+            <li><a href="#performance" class="text-blue-500 hover:underline">Performance</a></li>
+            <li><a href="#students" class="text-blue-500 hover:underline">Top Students</a></li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-span-10">
+        <header class="bg-blue-600 text-white p-4 rounded mb-4">
+            <h1 class="text-3xl font-bold">Educational Insights Dashboard</h1>
+            <p>A comprehensive view of student performance and statistics.</p>
+        </header>
+
+        <!-- Bar Chart - Grade Distribution -->
+        <section id="grades" class="bg-white p-4 rounded shadow mb-4">
+            <h2 class="text-2xl font-semibold mb-2">Grade Distribution by Subject</h2>
+            <div class="filter">
+                <label class="block text-gray-700">Filter by Subject: </label>
+                <select id="barFilter" class="border rounded p-2" onchange="updateBarChart()">
+                    <option value="all">All Subjects</option>
+                    <option value="Math">Math</option>
+                    <option value="Science">Science</option>
+                </select>
+            </div>
+            <div class="chart-container"><canvas id="barChart"></canvas></div>
+        </section>
+
+        <!-- Pie Chart - Grade Categories -->
+        <section class="bg-white p-4 rounded shadow mb-4">
+            <h2 class="text-2xl font-semibold mb-2">Student Grades Overview</h2>
+            <div class="chart-container"><canvas id="pieChart"></canvas></div>
+        </section>
+
+        <!-- Line Graph - Average Grades Trend -->
+        <section id="performance" class="bg-white p-4 rounded shadow mb-4">
+            <h2 class="text-2xl font-semibold mb-2">Average Grade Trends</h2>
+            <div class="filter">
+                <label class="block text-gray-700">Filter by Year: </label>
+                <select id="lineFilter" class="border rounded p-2" onchange="updateLineChart()">
+                    <option value="2023">2023</option>
+                    <option value="2022">2022</option>
+                </select>
+            </div>
+            <div class="chart-container"><canvas id="lineChart"></canvas></div>
+        </section>
+
+        <!-- Top Students Table -->
+        <section id="students" class="bg-white p-4 rounded shadow">
+            <h2 class="text-2xl font-semibold mb-2">Top 10 Students</h2>
+            <table class="table-auto w-full border-collapse">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="px-4 py-2 border">Rank</th>
+                        <th class="px-4 py-2 border">Name</th>
+                        <th class="px-4 py-2 border">Subject</th>
+                        <th class="px-4 py-2 border">Grade</th>
+                    </tr>
+                </thead>
+                <tbody id="topStudents"></tbody>
+            </table>
+        </section>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctxBar = document.getElementById('barChart').getContext('2d');
+    const ctxPie = document.getElementById('pieChart').getContext('2d');
+    const ctxLine = document.getElementById('lineChart').getContext('2d');
+
+    // Dummy data
+    const subjects = ['Math', 'Science', 'English', 'History'];
+    const grades = ['A', 'B', 'C', 'D', 'F'];
+    const students = Array.from({length: 100}, (_, i) => ({
+        name: `Student ${i+1}`,
+        subject: subjects[Math.floor(Math.random() * subjects.length)],
+        grade: grades[Math.floor(Math.random() * grades.length)],
+        year: Math.random() > 0.5 ? '2023' : '2022'
+    }));
+
+    // Initialize charts
+    let barChart = new Chart(ctxBar, {
+        type: 'bar',
+        data: { datasets: [{ label: 'Average Grades', data: [], backgroundColor: [] }] },
+        options: { scales: { y: { beginAtZero: true } } }
+    });
+
+    let pieChart = new Chart(ctxPie, {
+        type: 'pie',
+        data: { labels: grades, datasets: [{ data: grades.map(() => 0), backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'] }] }
+    });
+
+    let lineChart = new Chart(ctxLine, {
+        type: 'line',
+        data: { labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+               datasets: [{ label: 'Average Grade', data: [], borderColor: 'rgb(75, 192, 192)', tension: 0.1 }] }
+    });
+
+    // Functions to update charts
+    function updateBarChart() {
+        const subject = document.getElementById('barFilter').value;
+        const filteredData = subject === 'all' ? students : students.filter(s => s.subject === subject);
+        const gradeCounts = grades.map(grade => filteredData.filter(s => s.grade === grade).length);
+        barChart.data.labels = grades;
+        barChart.data.datasets[0].data = gradeCounts;
+        barChart.data.datasets[0].backgroundColor = grades.map((_, i) => `rgba(${i*50}, ${100+(i*20)}, ${200-(i*20)}, 0.6)`);
+        barChart.update();
+    }
+
+    function updatePieChart() {
+        const gradeDistribution = grades.map(grade => students.filter(s => s.grade === grade).length);
+        pieChart.data.datasets[0].data = gradeDistribution;
+        pieChart.update();
+    }
+
+    function updateLineChart() {
+        const year = document.getElementById('lineFilter').value;
+        const averageGrades = Array(12).fill().map(() => {
+            const monthStudents = students.filter(s => s.year === year && Math.random() > 0.3); // Randomize data a bit
+            return monthStudents.reduce((sum, s) => sum + (grades.indexOf(s.grade) + 1), 0) / monthStudents.length || 0;
+        });
+        lineChart.data.datasets[0].data = averageGrades;
+        lineChart.update();
+    }
+
+    function updateTopStudents() {
+        const topStudents = [...students].sort((a, b) => grades.indexOf(b.grade) - grades.indexOf(a.grade)).slice(0, 10);
+        document.getElementById('topStudents').innerHTML = topStudents.map((s, i) => `<tr><td class="px-4 py-2 border">${i+1}</td><td class="px-4 py-2 border">${s.name}</td><td class="px-4 py-2 border">${s.subject}</td><td class="px-4 py-2 border">${s.grade}</td></tr>`).join('');
+    }
+
+    // Initial updates
+    updateBarChart();
+    updatePieChart();
+    updateLineChart();
+    updateTopStudents();
+</script>
+
+</body>
+</html>

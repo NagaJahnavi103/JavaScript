@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Educational Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Arial', sans-serif; }
+        .sidebar { background-color: #334155; }
+        .chart-container { width: 100%; height: 300px; }
+        .filter-select { margin: 10px 0; }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+<header class="bg-blue-600 text-white p-4">
+    <h1 class="text-2xl">Educational Insights Dashboard</h1>
+    <p class="text-sm">A comprehensive view of student performance and educational statistics.</p>
+</header>
+
+<div class="flex flex-col md:flex-row">
+    <!-- Sidebar -->
+    <nav class="sidebar text-white w-full md:w-1/5 p-4">
+        <ul>
+            <li><a href="#" class="block py-2 hover:text-blue-300">Grades Distribution</a></li>
+            <li><a href="#" class="block py-2 hover:text-blue-300">Grade Categories</a></li>
+            <li><a href="#" class="block py-2 hover:text-blue-300">Academic Trends</a></li>
+            <li><a href="#" class="block py-2 hover:text-blue-300">Top Students</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="w-full md:w-4/5 p-4">
+        <!-- Bar Chart -->
+        <div class="bg-white p-4 rounded shadow mb-4">
+            <h2 class="text-xl mb-2">Distribution of Grades by Subject</h2>
+            <select id="barFilter" class="filter-select">
+                <option value="all">All Subjects</option>
+                <!-- Options will be populated dynamically -->
+            </select>
+            <div class="chart-container"><canvas id="barChart"></canvas></div>
+        </div>
+
+        <!-- Pie Chart -->
+        <div class="bg-white p-4 rounded shadow mb-4">
+            <h2 class="text-xl mb-2">Grade Categories</h2>
+            <select id="pieFilter" class="filter-select">
+                <option value="all">All Grades</option>
+            </select>
+            <div class="chart-container"><canvas id="pieChart"></canvas></div>
+        </div>
+
+        <!-- Line Graph -->
+        <div class="bg-white p-4 rounded shadow mb-4">
+            <h2 class="text-xl mb-2">Average Grades Over Time</h2>
+            <div class="chart-container"><canvas id="lineChart"></canvas></div>
+        </div>
+
+        <!-- Infographic and Table -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Infographic -->
+            <div class="bg-white p-4 rounded shadow">
+                <h2 class="text-xl">Key Statistics</h2>
+                <p>Total Students: <span id="totalStudents"></span></p>
+                <p>Average Grade: <span id="avgGrade"></span></p>
+            </div>
+
+            <!-- Table -->
+            <div class="bg-white p-4 rounded shadow overflow-x-auto">
+                <h2 class="text-xl">Top 10 Students</h2>
+                <table class="table-auto w-full">
+                    <thead>
+                        <tr>
+                            <th class="px-4 py-2">Rank</th>
+                            <th class="px-4 py-2">Name</th>
+                            <th class="px-4 py-2">Grade</th>
+                            <th class="px-4 py-2">Subject</th>
+                        </tr>
+                    </thead>
+                    <tbody id="topStudents"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    // Dummy data
+    const subjects = ['Math', 'Science', 'English', 'History'];
+    const grades = ['A', 'B', 'C', 'D', 'E', 'F'];
+    const students = [
+        {name: 'Alice', grade: 'A', subject: 'Math'},
+        // Populate with more dummy data
+    ];
+
+    // Function to initialize charts
+    function initCharts() {
+        const barCtx = document.getElementById('barChart').getContext('2d');
+        const pieCtx = document.getElementById('pieChart').getContext('2d');
+        const lineCtx = document.getElementById('lineChart').getContext('2d');
+
+        // Bar Chart - Grades by Subject
+        const barChart = new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: subjects,
+                datasets: [{
+                    label: 'Number of Students',
+                    data: subjects.map(sub => students.filter(s => s.subject === sub).length),
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)'
+                }]
+            },
+            options: {
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+
+        // Pie Chart - Grade Distribution
+        const pieData = grades.map(grade => 
+            students.filter(s => s.grade === grade).length
+        );
+        const pieChart = new Chart(pieCtx, {
+            type: 'pie',
+            data: {
+                labels: grades,
+                datasets: [{
+                    data: pieData,
+                    backgroundColor: ['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF','#FF9F40']
+                }]
+            }
+        });
+
+        // Line Chart - Grade Trends (simplified with dummy data)
+        const lineChart = new Chart(lineCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Average Grade',
+                    data: [75, 78, 80, 81, 79, 85],
+                    borderColor: 'rgb(75, 192, 192)',
+                    fill: false
+                }]
+            }
+        });
+
+        // Filters
+        document.getElementById('barFilter').addEventListener('change', function() {
+            // Update bar chart based on filter
+        });
+
+        document.getElementById('pieFilter').addEventListener('change', function() {
+            // Update pie chart based on filter
+        });
+    }
+
+    // Populate infographic and table
+    document.getElementById('totalStudents').textContent = students.length;
+    document.getElementById('avgGrade').textContent = 'B'; // Example average
+
+    const topStudentsTable = document.getElementById('topStudents');
+    students.sort((a, b) => (a.grade < b.grade ? 1 : -1)).slice(0, 10).forEach((student, index) => {
+        let row = topStudentsTable.insertRow();
+        row.insertCell(0).textContent = index + 1;
+        row.insertCell(1).textContent = student.name;
+        row.insertCell(2).textContent = student.grade;
+        row.insertCell(3).textContent = student.subject;
+    });
+
+    // Initialize charts when the DOM is fully loaded
+    document.addEventListener('DOMContentLoaded', initCharts);
+</script>
+
+</body>
+</html>
+```
