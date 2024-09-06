@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robotics Impact Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .dashboard { padding: 20px; }
+        .filters { margin-bottom: 20px; }
+        .chart-container { width: 80\%; margin: auto; }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <h1>Robotics Impact Across Industries</h1>
+        <div class="filters">
+            <select id="industryFilter">
+                <option value="all">All Industries</option>
+                <option value="manufacturing">Manufacturing</option>
+                <option value="construction">Construction</option>
+                <option value="healthcare">Healthcare</option>
+            </select>
+            <select id="techTypeFilter">
+                <option value="all">All Technologies</option>
+                <option value="spot">Spot Robot</option>
+                <option value="tesla">Tesla Robotic Arms</option>
+                <option value="daVinci">da Vinci Surgical System</option>
+            </select>
+        </div>
+        <div class="chart-container">
+            <canvas id="roboticsChart"></canvas>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.umd.js"></script>
+    <script>
+        const ctx = document.getElementById('roboticsChart').getContext('2d');
+        let myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['2017', '2018', '2019', '2020', '2021', '2022', '2023'],
+                datasets: [{
+                    label: 'Accident Reduction (\%)',
+                    data: [0, 0, 5, 10, 15, 25, 25],
+                    borderColor: 'blue',
+                    fill: false,
+                    hidden: true
+                }, {
+                    label: 'Production Speed Increase (\%)',
+                    data: [0, 0, 0, 5, 10, 15, 20],
+                    borderColor: 'green',
+                    fill: false,
+                    hidden: true
+                }, {
+                    label: 'Recovery Time Improvement (\%)',
+                    data: [0, 10, 20, 25, 30, 35, 40],
+                    borderColor: 'red',
+                    fill: false,
+                    hidden: true
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.y + '\%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Function to update chart based on filters
+        function updateChart() {
+            const industry = document.getElementById('industryFilter').value;
+            const tech = document.getElementById('techTypeFilter').value;
+            
+            myChart.data.datasets.forEach(dataset => {
+                if (tech === 'all' || dataset.label.toLowerCase().includes(tech)) {
+                    dataset.hidden = false;
+                } else {
+                    dataset.hidden = true;
+                }
+            });
+            myChart.update();
+        }
+
+        // Event listeners for filters
+        document.getElementById('industryFilter').addEventListener('change', updateChart);
+        document.getElementById('techTypeFilter').addEventListener('change', updateChart);
+
+        // Initial chart update
+        updateChart();
+    </script>
+</body>
+</html>

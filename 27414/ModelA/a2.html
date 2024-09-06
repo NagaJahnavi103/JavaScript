@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Non-Vegetarian Management Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <style>
+        .dashboard-header {
+            background: linear-gradient(to right, #4A90E2, #50E3C2);
+        }
+        .map-container {
+            height: 300px;
+            width: 100%;
+        }
+        .widget {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .chart-container {
+            position: relative;
+            height: 150px;
+            width: 100%;
+        }
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .badge {
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            color: white;
+            background-color: #82f565; /* Tailwind's red-500 */
+        }
+        .active-nav-item {
+            background-color: #d234ba; /* Tailwind's blue-700 */
+        }
+        .nav-item:hover {
+            background-color: #2b6cb0; /* Tailwind's blue-700 */
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+<div id="app" class="flex flex-col h-screen">
+    <header class="dashboard-header text-white p-4 flex justify-between items-center">
+        <h1 class="text-2xl font-bold">MeatPro Dashboard</h1>
+        <div id="alerts" class="flex items-center">
+            <span class="mr-2">Alerts:</span>
+            <span class="badge">{{ alertsCount }}</span>
+        </div>
+    </header>
+    <div class="flex flex-1 overflow-hidden">
+        <nav class="bg-gray-800 text-white w-64 p-4">
+            <ul>
+                <li v-for="item in navItems" :key="item.name" :class="{'active-nav-item': currentView === item.view}">
+                    <a href="#" @click.prevent="currentView = item.view" class="block py-2 px-4 nav-item hover:text-blue-300">
+                        {{ item.name }}
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <main class="flex-1 p-4 overflow-y-auto">
+            <!-- Dashboard -->
+            <div v-if="currentView === 'dashboard'" class="space-y-4">
+                <div class="widget">
+                    <h2 class="text-xl font-semibold">Dashboard Overview</h2>
+                    <div class="chart-container">
+                        <canvas id="inventoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventory -->
+            <div v-if="currentView === 'inventory'" class="space-y-4">
+                <div class="widget flex justify-between items-center">
+                    <h2 class="text-xl font-semibold">Inventory Overview</h2>
+                    <button @click="filterInventory" class="bg-blue-500 text-white px-4 py-2 rounded shadow hover:bg-blue-600">Filter</button>
+                </div>
+                <div class="widget">
+                    <div class="chart-container">
+                        <canvas id="inventoryChart"></canvas>
+                    </div>
+                </div>
+                <div class="widget">
+                    <h2 class="text-xl font-semibold">Inventory Data</h2>
+                    <table class="min-w-full bg-white border border-gray-300">
+                        <thead>
+                            <tr>
+                                <th class="py-2 px-4 border-b">Item</th>
+                                <th class="py-2 px-4 border-b">Quantity</th>
+                                <th class="py-2 px-4 border-b">Location</th>
+                                <th class="py-2 px-4 border-b">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="item in inventoryData" :key="item.id">
+                                <td class="py-2 px-4 border-b">{{ item.item }}</td>
+                                <td class="py-2 px-4 border-b">{{ item.quantity }}</td>
+                                <td class="py-2 px-4 border-b">{{ item.location }}</td>
+                                <td class="py-2 px-4 border-b">{{ item.status }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Supply Chain -->
+            <div v-if="currentView === 'supply'" class="space-y-4">
+                <div class="widget">
+                    <h2 class="text-xl font-semibold">Supply Chain Timeline</h2>
+                    <div class="chart-container">
+                        <canvas id="supplyChainChart"></canvas>
+                    </div>
+                </div>
+                <div class="widget">
+                    <h2 class="text-xl font-semibold">Supply Chain Data</h2>
+                    <table class="min-w-full bg-white border border-gray-300">
+                        <thead>
+                            <tr>
+                                <th class="py-2 px-4 border-b">Stage</th>
+                                <th class="py-2 px-4 border-b">Completion (%)</th>
+                                <th class="py-2 px-4 border-b">Duration (days)</th>
+                                <th class="py-2 px-4 border-b">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="stage in supplyChainData" :key="stage.id">
+                                <td class="py-2 px-4 border-b">{{ stage.stage }}</td>
+                                <td class="py-2 px-4 border-b">{{ stage.completion }}%</td>
+                                <td class="py-2 px-4 border-b">{{ stage.duration }}</td>
+                                <td class="py-2 px-4 border-b">{{ stage.status }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Demand Forecast -->
+            <div v-if="currentView === 'forecast'" class="space-y-4">
+                <div class="widget">
+                    <h2 class="text-xl font-semibold">Demand Forecast</h2>
+                    <div class="chart-container">
+                        <canvas id="forecastChart"></canvas>
+                    </div>
+                </div>
+                <div class="widget">
+                    <h2 class="text-xl font-semibold">Forecast Data</h2>
+                    <table class="min-w-full bg-white border border-gray-300">
+                        <thead>
+                            <tr>
+                                <th class="py-2 px-4 border-b">Month</th>
+                                <th class="py-2 px-4 border-b">Predicted Demand</th>
+                                <th class="py-2 px-4 border-b">Actual Demand</th>
+                                <th class="py-2 px-4 border-b">Variance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="forecast in forecastData" :key="forecast.id">
+                                <td class="py-2 px-4 border-b">{{ forecast.month }}</td>
+                                <td class="py-2 px-4 border-b">{{ forecast.predictedDemand }}</td>
+                                <td class="py-2 px-4 border-b">{{ forecast.actualDemand }}</td>
+                                <td class="py-2 px-4 border-b">{{ forecast.variance }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Quality Control -->
+            <div v-if="currentView === 'quality'" class="space-y-4">
+                <div class="widget">
+                    <h2 class="text-xl font-semibold">Quality Control</h2

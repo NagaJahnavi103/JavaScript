@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seat Booking System</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+        }
+        .sidebar {
+            height: 100%;
+            width: 250px;
+            position: fixed;
+            z-index: 1;
+            top: 0;
+            left: 0;
+            background-color: #111;
+            overflow-x: hidden;
+            padding-top: 20px;
+        }
+        .sidebar a {
+            padding: 6px 8px 6px 16px;
+            text-decoration: none;
+            font-size: 20px;
+            color: #818181;
+            display: block;
+        }
+        .sidebar a:hover {
+            color: #f1f1f1;
+        }
+        .main {
+            margin-left: 250px;
+            padding: 0px 10px;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <a href="#booking">Booking Seat</a>
+    <a href="#mybookings">My Bookings</a>
+</div>
+
+<div class="main">
+    <h2>Seat Booking</h2>
+    <form id="bookingForm">
+        <!-- Booking For -->
+        <div class="form-group">
+            <label>Booking For:</label>
+            <select id="bookingFor" class="form-control">
+                <option value="me">For Me</option>
+                <option value="others">Others</option>
+            </select>
+            <input type="text" id="employeeName" class="form-control mt-2" style="display:none;" placeholder="Enter employee name">
+        </div>
+        <!-- Booking Type -->
+        <div class="form-group">
+            <label>Booking Type:</label>
+            <div>
+                <input type="radio" id="hybrid" name="bookingType" value="hybrid">
+                <label for="hybrid">Hybrid</label>
+                <input type="radio" id="hotdesk" name="bookingType" value="hotdesk">
+                <label for="hotdesk">Hot Desk</label>
+            </div>
+        </div>
+        <!-- Location Selections -->
+        <div class="form-group">
+            <select id="city" class="form-control"><option>Select City</option></select>
+            <select id="campus" class="form-control mt-2" disabled><option>Select Campus</option></select>
+            <select id="floor" class="form-control mt-2" disabled><option>Select Floor</option></select>
+        </div>
+        <!-- Date Range -->
+        <div class="form-group">
+            <label>Select Date Range:</label>
+            <input type="text" id="dateRange" class="form-control" readonly>
+        </div>
+        <!-- Days Selection -->
+        <div id="daysSelection" class="form-group" style="display:none;">
+            <label>Select Days:</label>
+            <!-- Days will be dynamically added here -->
+        </div>
+        <button type="button" id="proceedBtn" class="btn btn-primary" disabled>Proceed</button>
+    </form>
+    <div id="confirmation" style="display:none;">
+        <!-- Confirmation details will be shown here -->
+        <button class="btn btn-success">Book Now</button>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+<script>
+\$(document).ready(function() {
+    // Initialize date range picker
+    \$('#dateRange').daterangepicker({
+        autoApply: true
+    });
+
+    // Dynamic city, campus, floor selection
+    const locations = {
+        'Hyderabad': ['Campus1', 'Campus2'],
+        'New York': ['NYC1', 'NYC2'],
+        'New Jessy': ['NJ1'],
+        'Washington': ['DC1']
+    };
+
+    \$.each(locations, function(city, campuses) {
+        \$('#city').append(new Option(city, city));
+    });
+
+    \$('#city').on('change', function() {
+        let city = \$(this).val();
+        let \$campus = \$('#campus').empty().prop('disabled', false);
+        locations[city].forEach(campus => \$campus.append(new Option(campus, campus)));
+        \$('#floor').prop('disabled', true).empty();
+    });
+
+    \$('#campus').on('change', function() {
+        \$('#floor').prop('disabled', false);
+        // Here you would populate floors or enable selection
+    });
+
+    // Show employee name field if booking for others
+    <INLINE_MATH>('#bookingFor').on('change', function() {
+        if (</INLINE_MATH>(this).val() === 'others') {
+            \$('#employeeName').show();
+        } else {
+            \$('#employeeName').hide();
+        }
+    });
+
+    // Form validation and proceed button
+    \$('#bookingForm').on('change keyup', function() {
+        let isValid = \$('#bookingFor').val() && \$('input[name=bookingType]:checked').length && 
+                      \$('#city').val() !== 'Select City' && \$('#campus').val() && 
+                      \$('#dateRange').val();
+        \$('#proceedBtn').prop('disabled', !isValid);
+    });
+
+    // Show selected days
+    \$('#dateRange').on('apply.daterangepicker', function(ev, picker) {
+        let start = picker.startDate, end = picker.endDate;
+        let days = [];
+        for (let d = start; d <= end; d.setDate(d.getDate() + 1)) {
+            days.push(d.toLocaleDateString('en-US', {weekday: 'long'}));
+        }
+        \$('#daysSelection').show().html(days.map(day => `<input type="checkbox" checked> \${day}`).join('<br>'));
+    });
+
+    // Confirmation message
+    \$('#proceedBtn').on('click', function() {
+        // Here you would collect form data and display in #confirmation
+        \$('#confirmation').show();
+    });
+});
+</script>
+
+</body>
+</html>
