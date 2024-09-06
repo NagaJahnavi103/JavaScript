@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Details Dashboard</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+        }
+        .sidebar {
+            height: 100vh;
+            background-color: #343a40;
+            color: white;
+        }
+        .panel {
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .course-card {
+            margin: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .progress-ring {
+            width: 50px;
+            height: 50px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row">
+        <nav class="col-md-2 d-none d-md-block bg-light sidebar">
+            <div class="sidebar-sticky">
+                <ul class="nav flex-column">
+                    <li class="nav-item"><a class="nav-link" href="#">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="#">My Learning</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">Analytics</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">Settings</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+            <input type="text" class="form-control mb-3" placeholder="Search for courses..." id="courseSearch">
+            
+            <!-- All Courses Panel -->
+            <div class="panel" id="allCourses">
+                <h2>All Courses</h2>
+                <!-- Table with sortable columns -->
+            </div>
+
+            <!-- Pending Courses Panel -->
+            <div class="panel" id="pendingCourses">
+                <h2>Pending Courses</h2>
+                <!-- Grid layout for course cards -->
+            </div>
+
+            <!-- Completed Courses Panel -->
+            <div class="panel" id="completedCourses">
+                <h2>Completed Courses</h2>
+                <!-- List view with filtering -->
+            </div>
+        </main>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+    // JavaScript for interactivity (sorting, filtering, etc.)
+    // This would involve setting up event listeners for sortable headers, dropdown filters, and search functionality
+    $(document).ready(function() {
+        // Example: Initialize sortable table
+        $('#allCourses table').DataTable();
+
+        // Example: Filter functionality
+        $('.filter-dropdown').on('change', function() {
+            // Filter logic here
+        });
+    });
+</script>
+</body>
+</html>

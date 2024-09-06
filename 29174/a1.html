@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Learning Details Dashboard</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+<style>
+  body { font-family: 'Arial', sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
+  .sidebar { height: 100vh; width: 200px; position: fixed; z-index: 1; top: 0; left: 0; background-color: #333; overflow-x: hidden; padding-top: 20px; }
+  .sidebar a { padding: 15px 8px 15px 16px; text-decoration: none; font-size: 18px; color: #818181; display: block; }
+  .sidebar a:hover { color: #f1f1f1; }
+  .main-content { margin-left: 200px; padding: 20px; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .search-bar { width: 100%; padding: 10px; margin-bottom: 20px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 8px; }
+  th { background-color: #04AA6D; color: white; }
+  tr:nth-child(even) { background-color: #f2f2f2; }
+  .course-card { background: white; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 15px; margin: 10px; width: 200px; }
+  .progress-ring { width: 50px; height: 50px; border-radius: 50%; background: conic-gradient(#04AA6D var(--progress), #eee 0deg); display: flex; justify-content: center; align-items: center; }
+  .progress-ring::before { content: ""; position: absolute; width: 40px; height: 40px; border-radius: 50%; background: white; }
+  @media (max-width: 768px) {
+    .sidebar { width: 100%; height: auto; position: relative; }
+    .main-content { margin-left: 0; }
+    .sidebar a { float: left; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <a href="#dashboard">Dashboard</a>
+  <a href="#my-learning" onclick="showPanel('my-learning')">My Learning</a>
+  <a href="#analytics">Analytics</a>
+  <a href="#settings">Settings</a>
+</div>
+
+<div class="main-content">
+  <input type="text" class="search-bar" placeholder="Search for courses...">
+  
+  <div id="my-learning" class="panel active">
+    <h2>My Learning</h2>
+    
+    <!-- All Courses Panel -->
+    <div id="all-courses">
+      <select id="status-filter" onchange="filterCourses()">
+        <option value="">Filter by Status</option>
+        <option value="Ongoing">Ongoing</option>
+        <option value="Completed">Completed</option>
+      </select>
+      <table id="courses-table">
+        <thead>
+          <tr>
+            <th onclick="sortTable(0)">Course Name</th>
+            <th onclick="sortTable(1)">Status</th>
+            <th onclick="sortTable(2)">Completion Date</th>
+            <th onclick="sortTable(3)">Credits</th>
+            <th onclick="sortTable(4)">Expertise</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Table content will be dynamically filled -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pending Courses Panel -->
+    <div id="pending-courses">
+      <h3>Pending Courses</h3>
+      <div class="course-grid">
+        <!-- Cards will be dynamically added here -->
+      </div>
+    </div>
+
+    <!-- Completed Courses Panel -->
+    <div id="completed-courses">
+      <h3>Completed Courses</h3>
+      <ul id="completed-list">
+        <!-- List items will be dynamically added -->
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', (event) => {
+  const courses = [
+    {name: 'Advanced Data Analysis', status: 'Ongoing', date: 'N/A', credits: 5, expertise: 'Intermediate'},
+    {name: 'Introduction to Machine Learning', status: 'Pending', date: '2024-10-01', credits: 3, expertise: 'Beginner', description: 'Fundamentals of machine learning with hands-on projects.'},
+    {name: 'Python for Data Science', status: 'Completed', date: '2024-05-15', credits: 4, expertise: 'Beginner'},
+    // Add more courses as needed
+  ];
+
+  function showPanel(panelId) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById(panelId).classList.add('active');
+  }
+
+  function sortTable(n) {
+    let table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+    table = document.getElementById("courses-table");
+    switching = true;
+    dir = "asc"; 
+    while (switching) {
+      switching = false;
+      rows = table.rows;
+      for (i = 1; i < (rows.length - 1); i++) {
+        shouldSwitch = false;
+        x = rows[i].getElementsByTagName("TD")[n];
+        y = rows[i + 1].getElementsByTagName("TD")[n];
+        if (dir == "asc") {
+          if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+            shouldSwitch = true;
+            break;
+          }
+        } else if (dir == "desc") {
+          if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+            shouldSwitch = true;
+            break;
+          }
+        }
+      }
+      if (shouldSwitch) {
+        rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+        switching = true;
+        switchcount ++; 
+      } else {
+        if (switchcount == 0 && dir == "asc") {
+          dir = "desc";
+          switching = true;
+        }
+      }
+    }
+  }
+
+  function filterCourses() {
+    const status = document.getElementById('status-filter').value;
+    const tbody = document.querySelector('#courses-table tbody');
+    tbody.innerHTML = '';
+    courses.filter(course => status === '' || course.status === status)
+           .forEach(course => {
+      const row = tbody.insertRow();
+      ['name', 'status', 'date', 'credits', 'expertise'].forEach((prop, index) => {
+        const cell = row.insertCell(index);
+        cell.textContent = course[prop];
+      });
+    });
+  }
+
+  function displayPendingCourses() {
+    const grid = document.querySelector('.course-grid');
+    courses.filter(course => course.status === 'Pending').forEach(course => {
+      const card = document.createElement('div');
+      card.className = 'course-card';
+      card.innerHTML = `
+        <h4>${course.name}</h4>
+        <div class="progress-ring" style="--progress: 0%;"></div>
+        <p>Start: ${course.date}</p>
+        <p>${course.description}</p>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  // Initial setup
+  filterCourses();
+  displayPendingCourses();
+  // Add similar functions for completed courses
+});
+</script>
+</body>
+</html>
