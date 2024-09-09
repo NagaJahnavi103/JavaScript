@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zero Waste Kitchen</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+    <style>
+        body { font-family: 'Arial', sans-serif; }
+        .kitchen-area, .dashboard { padding: 20px; }
+        .pantry-item, .recipe-item { 
+            cursor: grab; 
+            margin: 5px; 
+            padding: 10px; 
+            border: 1px solid #ddd; 
+            border-radius: 5px; 
+        }
+        .drag-area { 
+            min-height: 200px; 
+            border: 2px dashed #ccc; 
+            border-radius: 10px; 
+            padding: 10px; 
+        }
+        .animated { transition: all 0.3s; }
+    </style>
+</head>
+<body>
+    <section class="section">
+        <div class="container">
+            <h1 class="title">Zero Waste Kitchen</h1>
+            <div class="columns">
+                <div class="column is-one-third kitchen-area">
+                    <h2 class="subtitle">Pantry</h2>
+                    <div id="pantry" class="drag-area"></div>
+                </div>
+                <div class="column is-one-third kitchen-area">
+                    <h2 class="subtitle">Create Recipe</h2>
+                    <div id="recipeArea" class="drag-area"></div>
+                </div>
+                <div class="column dashboard">
+                    <h2 class="subtitle">Dashboard</h2>
+                    <canvas id="wasteChart"></canvas>
+                </div>
+            </div>
+            <div class="columns">
+                <div class="column">
+                    <h2 class="subtitle">Compost Guide</h2>
+                    <div id="compostGuide"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+    $(function() {
+        // Sample data
+        const pantryItems = ['Tomato', 'Bread', 'Cheese', 'Egg'];
+        const $pantry = $('#pantry');
+        const $recipeArea = $('#recipeArea');
+
+        // Populate pantry
+        pantryItems.forEach(item => {
+            $pantry.append(`<div class="pantry-item" draggable="true">${item}</div>`);
+        });
+
+        // Drag and Drop functionality
+        $('.pantry-item').on('dragstart', function(e) {
+            e.originalEvent.dataTransfer.setData("text/plain", e.target.textContent);
+        });
+
+        $recipeArea.on('dragover', function(e) {
+            e.preventDefault();
+        });
+
+        $recipeArea.on('drop', function(e) {
+            e.preventDefault();
+            const data = e.originalEvent.dataTransfer.getData("text");
+            $(this).append(`<div class="recipe-item animated">${data}</div>`);
+        });
+
+        // Chart for dashboard
+        const ctx = document.getElementById('wasteChart').getContext('2d');
+        const wasteChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Week 1', 'Week 2', 'Week 3'],
+                datasets: [{
+                    label: 'Food Waste (kg)',
+                    data: [5, 3, 2],
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: { scales: { y: { beginAtZero: true } } }
+        });
+
+        // Placeholder for compost guide animation
+        $('#compostGuide').html('<p>Here will be an animated guide on composting.</p>');
+    });
+    </script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zero Waste Kitchen</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body { font-family: 'Arial', sans-serif; background: #f4f4f9; margin: 0; padding: 20px; }
+        .game-container { max-width: 1200px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .drag-drop-area, .recipe-book, .pantry, .compost-guide { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 4px; }
+        .ingredient { padding: 10px; margin: 5px; background: #e9ecef; border-radius: 4px; cursor: move; }
+        .ingredient:hover { background: #d4edda; }
+        .dashboard { background: #e9ecef; padding: 20px; border-radius: 4px; }
+        .achievement { background: gold; padding: 5px; margin: 5px 0; display: inline-block; }
+        .animated-guide { background: #fff; border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
+        .animated-guide div { transition: all 0.5s; }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Zero Waste Kitchen</h1>
+        <div class="drag-drop-area" id="kitchenArea">
+            <!-- Ingredients will be dynamically added here -->
+        </div>
+        <div class="recipe-book" id="recipeBook">
+            <h2>Recipe Book</h2>
+            <!-- Recipes will appear here -->
+        </div>
+        <div class="pantry" id="pantry">
+            <h2>Pantry</h2>
+            <!-- Pantry items will be listed here -->
+        </div>
+        <div class="compost-guide">
+            <h2>Composting Guide</h2>
+            <div class="animated-guide">
+                <!-- Animated composting steps -->
+            </div>
+        </div>
+        <div class="dashboard">
+            <h2>Dashboard</h2>
+            <canvas id="wasteStats"></canvas>
+            <div id="achievements">
+                <!-- Achievements will be displayed here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1"></script>
+    <script>
+        $(function() {
+            // Initialize drag and drop
+            $(".ingredient").draggable({ 
+                revert: "invalid", 
+                helper: "clone" 
+            });
+
+            $("#kitchenArea").droppable({
+                drop: function(event, ui) {
+                    // Logic for when an ingredient is dropped
+                    if (!ui.draggable.hasClass('from-pantry')) {
+                        $(this).append(ui.draggable.clone().removeClass('ui-draggable-dragging'));
+                    }
+                }
+            });
+
+            // Sample function to update pantry
+            function updatePantry(item, action) {
+                let pantry = $("#pantry");
+                if (action === 'add') {
+                    pantry.append(`<div class="ingredient from-pantry">${item}</div>`);
+                } else if (action === 'remove') {
+                    pantry.find(`:contains(${item})`).first().remove();
+                }
+            }
+
+            // Example of creating a recipe
+            function createRecipe(ingredients) {
+                $("#recipeBook").append(`<p>New Recipe with: ${ingredients.join(', ')}</p>`);
+            }
+
+            // Achievement unlock logic (simplified)
+            function unlockAchievement(badge) {
+                $("#achievements").append(`<span class="achievement">${badge}</span>`);
+            }
+
+            // Animated compost guide (placeholder animation)
+            function animateCompostGuide() {
+                let guide = $('.animated-guide');
+                guide.html('<div style="width:0%; background-color:green; height:20px;">Step 1</div>');
+                guide.find('div').animate({width: '100%'}, 2000, function() {
+                    $(this).text('Step 2').css('background-color', 'orange');
+                    $(this).animate({width: '50%'}, 2000);
+                });
+            }
+
+            // Dashboard Chart
+            var ctx = document.getElementById('wasteStats').getContext('2d');
+            var myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['This Week', 'Last Week'],
+                    datasets: [{
+                        label: 'Food Waste (kg)',
+                        data: [1.2, 1.5],
+                        backgroundColor: ['rgba(255, 99, 132, 0.2)', 'rgba(54, 162, 235, 0.2)'],
+                        borderColor: ['rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Initial setup
+            animateCompostGuide();
+            unlockAchievement("First Recipe Created");
+            updatePantry('Carrot', 'add');
+        });
+    </script>
+</body>
+</html>
