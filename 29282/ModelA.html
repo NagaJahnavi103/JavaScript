@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Digital Art Market Trends</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .chart-container { width: 80%; margin: 20px auto; }
+        select { margin: 10px; }
+    </style>
+</head>
+<body>
+    <select id="yearSelector">
+        <option value="2017">2017</option>
+        <option value="2018">2018</option>
+        <option value="2019">2019</option>
+        <option value="2020">2020</option>
+        <option value="2021">2021</option>
+    </select>
+    <div class="chart-container">
+        <canvas id="growthChart"></canvas>
+    </div>
+    <div class="chart-container">
+        <canvas id="pieChart"></canvas>
+    </div>
+    <div class="chart-container">
+        <canvas id="bubbleChart"></canvas>
+    </div>
+
+    <script>
+        const ctxGrowth = document.getElementById('growthChart').getContext('2d');
+        const ctxPie = document.getElementById('pieChart').getContext('2d');
+        const ctxBubble = document.getElementById('bubbleChart').getContext('2d');
+
+        let growthChart, pieChart, bubbleChart;
+
+        // Data for charts
+        const growthData = [0, 35, /*... data for 2018, 2019...*/, 20]; // Example data, needs actual numbers
+        const pieData = {
+            '2017': {digital: 10, traditional: 90},
+            '2020': {digital: 15, traditional: 85}
+            // Add more years as necessary
+        };
+        const bubbleData = {
+            labels: ['SuperRare', 'Foundation', 'Others'],
+            datasets: [{
+                data: [
+                    {x: 'SuperRare', y: 10, r: 10},
+                    {x: 'Foundation', y: 15, r: 15},
+                    {x: 'Others', y: 5, r: 5}
+                ],
+                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56']
+            }]
+        };
+
+        function updateCharts(year) {
+            // Update Line Chart
+            if(growthChart) growthChart.destroy();
+            growthChart = new Chart(ctxGrowth, {
+                type: 'line',
+                data: {
+                    labels: ['2017', '2018', '2019', '2020', '2021'],
+                    datasets: [{
+                        label: 'Growth in Digital Art Sales (%)',
+                        data: growthData,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        fill: false
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: { beginAtZero: true }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Growth: ${context.parsed.y}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Update Pie Chart
+            if(pieChart) pieChart.destroy();
+            pieChart = new Chart(ctxPie, {
+                type: 'pie',
+                data: {
+                    labels: ['Digital', 'Traditional'],
+                    datasets: [{
+                        data: [pieData[year].digital, pieData[year].traditional],
+                        backgroundColor: ['#36A2EB', '#FF6384']
+                    }]
+                }
+            });
+
+            // Bubble Chart does not change with year in this example, but could be updated similarly
+        }
+
+        document.getElementById('yearSelector').addEventListener('change', function() {
+            updateCharts(this.value);
+        });
+
+        // Initial chart rendering
+        updateCharts('2017');
+    </script>
+</body>
+</html>

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Art Market Trends</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .chart-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+        .chart-box {
+            width: 100%;
+            height: 400px;
+            margin: 20px 0;
+        }
+        #filters {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Digital Art Market Trends</h1>
+
+    <div id="filters">
+        <label for="yearSelect">Filter by Year:</label>
+        <select id="yearSelect" onchange="filterData()">
+            <option value="all">All Years</option>
+            <option value="2017">2017</option>
+            <option value="2018">2018</option>
+            <option value="2019">2019</option>
+            <option value="2020">2020</option>
+            <option value="2021">2021</option>
+        </select>
+
+        <label for="platformSelect">Filter by Platform:</label>
+        <select id="platformSelect" onchange="filterData()">
+            <option value="all">All Platforms</option>
+            <option value="SuperRare">SuperRare</option>
+            <option value="Foundation">Foundation</option>
+            <option value="Christies">Christie's</option>
+            <option value="Sothebys">Sotheby's</option>
+        </select>
+    </div>
+
+    <div class="chart-container">
+        <div class="chart-box">
+            <canvas id="lineChart"></canvas>
+        </div>
+        <div class="chart-box">
+            <canvas id="pieChart"></canvas>
+        </div>
+        <div class="chart-box">
+            <canvas id="bubbleChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const ctxLine = document.getElementById('lineChart').getContext('2d');
+        const ctxPie = document.getElementById('pieChart').getContext('2d');
+        const ctxBubble = document.getElementById('bubbleChart').getContext('2d');
+
+        // Sample data with estimated values for 2018 and 2019
+        const data = {
+            years: [2017, 2018, 2019, 2020, 2021],
+            digitalGrowth: [35, 20, 25, 15, 20], // Percentage growth each year
+            marketShare: {
+                2017: { digital: 5, traditional: 95 },
+                2018: { digital: 8, traditional: 92 }, // Estimated data for 2018
+                2019: { digital: 12, traditional: 88 }, // Estimated data for 2019
+                2020: { digital: 15, traditional: 85 },
+                2021: { digital: 20, traditional: 80 },
+            },
+            platforms: [
+                { name: 'SuperRare', marketShare: 8, year: 2020 },
+                { name: 'Foundation', marketShare: 7, year: 2020 },
+                { name: 'SuperRare', marketShare: 35, year: 2021 },
+                { name: 'Foundation', marketShare: 25, year: 2021 },
+                { name: "Christie's", marketShare: 20, year: 2021 },
+                { name: "Sotheby's", marketShare: 20, year: 2021 },
+            ],
+        };
+
+        let lineChart, pieChart, bubbleChart;
+
+        function createCharts() {
+            lineChart = new Chart(ctxLine, {
+                type: 'line',
+                data: {
+                    labels: data.years,
+                    datasets: [{
+                        label: 'Annual % Growth of Digital Art Sales',
+                        data: data.digitalGrowth,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        fill: true,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '% Growth',
+                            },
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Year',
+                            },
+                        },
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `Growth: ${context.raw}%`,
+                            },
+                        },
+                    },
+                },
+            });
+
+            pieChart = new Chart(ctxPie, {
+                type: 'pie',
+                data: {
+                    labels: ['Digital', 'Traditional'],
+                    datasets: [{
+                        data: Object.values(data.marketShare[2021]),
+                        backgroundColor: ['#FF6384', '#36A2EB'],
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `${context.label}: ${context.raw}%`,
+                            },
+                        },
+                    },
+                },
+            });
+
+            bubbleChart = new Chart(ctxBubble, {
+                type: 'bubble',
+                data: {
+                    datasets: data.platforms.map(platform => ({
+                        label: platform.name,
+                        data: [{
+                            x: platform.year,
+                            y: platform.marketShare,
+                            r: platform.marketShare / 5,
+                        }],
+                        backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                    })),
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Year',
+                            },
+                            ticks: {
+                                stepSize: 1,
+                            },
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Market Share (%)',
+                            },
+                        },
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `${context.dataset.label}: ${context.raw.y}% Market Share`,
+                            },
+                        },
+                    },
+                },
+            });
+        }
+
+        function filterData() {
+            const selectedYear = document.getElementById('yearSelect').value;
+            const selectedPlatform = document.getElementById('platformSelect').value;
+
+            // Update Line Chart
+            if (selectedYear === 'all') {
+                lineChart.data.labels = data.years;
+                lineChart.data.datasets[0].data = data.digitalGrowth;
+            } else {
+                lineChart.data.labels = [selectedYear];
+                lineChart.data.datasets[0].data = [data.digitalGrowth[data.years.indexOf(parseInt(selectedYear))]];
+            }
+            lineChart.update();
+
+            // Update Pie Chart
+            const marketData = selectedYear === 'all' ? data.marketShare[2021] : data.marketShare[selectedYear];
+            pieChart.data.datasets[0].data = marketData ? Object.values(marketData) : [0, 0];
+            pieChart.update();
+
+            // Update Bubble Chart
+            const filteredPlatforms = data.platforms.filter(platform => {
+                const yearMatch = selectedYear === 'all' || platform.year === parseInt(selectedYear);
+                const platformMatch = selectedPlatform === 'all' || platform.name.toLowerCase().includes(selectedPlatform.toLowerCase());
+                return yearMatch && platformMatch;
+            });
+            bubbleChart.data.datasets = filteredPlatforms.map(platform => ({
+                label: platform.name,
+                data: [{
+                    x: platform.year,
+                    y: platform.marketShare,
+                    r: platform.marketShare / 5,
+                }],
+                backgroundColor: 'rgba(255, 159, 64, 0.6)',
+            }));
+            bubbleChart.update();
+        }
+
+        // Initialize Charts
+        createCharts();
+    </script>
+</body>
+</html>

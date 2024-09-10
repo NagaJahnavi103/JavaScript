@@ -8,45 +8,101 @@
     <style>
         body {
             font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .chart-container {
-            width: 800px;
-            height: 400px;
-            margin: 20px auto;
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 15px;
+            text-align: center;
         }
         .filters {
             text-align: center;
-            margin-bottom: 20px;
+            margin: 20px 0;
+        }
+        .filters select {
+            padding: 10px;
+            font-size: 16px;
+            margin: 0 10px;
+        }
+        .chart-container {
+            width: 90%;
+            max-width: 600px;
+            height: 300px;
+            margin: 20px auto;
+        }
+        footer {
+            background-color: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            position: fixed;
+            width: 100%;
+            bottom: 0;
+        }
+        .taskbar {
+            background-color: #34495e;
+            color: white;
+            padding: 10px;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            display: flex;
+            justify-content: space-around;
+        }
+        .taskbar a {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+        }
+        .taskbar a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
-    <div class="filters">
-        <select id="city-filter">
-            <option value="all">All Cities</option>
-            <option value="Tokyo">Tokyo</option>
-            <option value="NYC">New York City</option>
-            <option value="Berlin">Berlin</option>
-        </select>
-        <select id="category-filter">
-            <option value="all">All Categories</option>
-            <option value="Green Space">Green Space</option>
-            <option value="Energy Efficiency">Energy Efficiency</option>
-            <option value="Emission Reduction">Emission Reduction</option>
-        </select>
+    <header>
+        <h1>Urban Sustainability Dashboard</h1>
+    </header>
+    <div class="taskbar">
+        <a href="#home">Home</a>
+        <a href="#about">About</a>
+        <a href="#contact">Contact</a>
     </div>
-    <div class="chart-container">
-        <canvas id="lineChart"></canvas>
-    </div>
-    <div class="chart-container">
-        <canvas id="barChart"></canvas>
-    </div>
+    <main style="margin-top: 60px;">
+        <div class="filters">
+            <select id="city-filter">
+                <option value="all">All Cities</option>
+                <option value="Tokyo">Tokyo</option>
+                <option value="NYC">New York City</option>
+                <option value="Berlin">Berlin</option>
+            </select>
+            <select id="category-filter">
+                <option value="all">All Categories</option>
+                <option value="Green Space">Green Space</option>
+                <option value="Energy Efficiency">Energy Efficiency</option>
+                <option value="Emission Reduction">Emission Reduction</option>
+            </select>
+        </div>
+        <div class="chart-container">
+            <canvas id="lineChart"></canvas>
+        </div>
+        <div class="chart-container">
+            <canvas id="barChart"></canvas>
+        </div>
+    </main>
+    <footer>
+        <p>&copy; 2024 Urban Sustainability Dashboard. All rights reserved.</p>
+    </footer>
 
     <script>
         const ctxLine = document.getElementById('lineChart').getContext('2d');
         const ctxBar = document.getElementById('barChart').getContext('2d');
 
-        // Data for the charts based on the sustainability initiatives
         const originalData = {
             labels: Array.from({length: 11}, (_, i) => 2015 + i),
             datasets: [
@@ -203,7 +259,6 @@
             const cityFilter = document.getElementById('city-filter').value;
             const categoryFilter = document.getElementById('category-filter').value;
 
-            // Filter the data for the line chart
             const filteredLineData = {
                 labels: originalData.labels,
                 datasets: originalData.datasets.filter(dataset => {
@@ -213,7 +268,6 @@
                 })
             };
 
-            // Filter the data for the bar chart
             const filteredBarData = {
                 labels: originalBarData.labels,
                 datasets: originalBarData.datasets.filter(dataset => {
@@ -223,7 +277,6 @@
                 })
             };
 
-            // Update the charts with the filtered data
             lineChart.data = filteredLineData;
             lineChart.update();
 

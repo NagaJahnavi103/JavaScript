@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Digital Art Market Trends</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .chart-container { 
+            width: 80%; 
+            margin: 20px auto; 
+        }
+        select {
+            margin: 10px;
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="chart-container">
+    <h2>Digital Art Sales Growth</h2>
+    <canvas id="lineChart"></canvas>
+    <select id="yearFilter" onchange="updateCharts()">
+        <option value="all">All Years</option>
+        <!-- Options will be dynamically filled -->
+    </select>
+</div>
+
+<div class="chart-container">
+    <h2>Market Share: Digital vs Traditional Art</h2>
+    <canvas id="pieChart"></canvas>
+</div>
+
+<div class="chart-container">
+    <h2>Leading Digital Art Platforms</h2>
+    <canvas id="bubbleChart"></canvas>
+    <select id="platformFilter" onchange="filterPlatform()">
+        <option value="all">All Platforms</option>
+        <!-- Options will be dynamically filled -->
+    </select>
+</div>
+
+<script>
+    // Dummy data for demonstration
+    const data = {
+        growth: [
+            {year: 2017, growth: 35},
+            {year: 2018, growth: 40},
+            {year: 2019, growth: 50},
+            {year: 2020, growth: 60},
+            {year: 2021, growth: 70}
+        ],
+        marketShare: {
+            2017: {digital: 10, traditional: 90},
+            2020: {digital: 15, traditional: 85},
+            2021: {digital: 20, traditional: 80}
+        },
+        platforms: [
+            {name: 'SuperRare', year: 2020, share: 5, sales: 1000000},
+            {name: 'Foundation', year: 2020, share: 4, sales: 900000},
+            {name: 'Sotheby’s', year: 2020, share: 3, sales: 800000},
+            {name: 'Christie’s', year: 2020, share: 3, sales: 750000}
+        ]
+    };
+
+    // Populate year filter
+    data.growth.forEach(yearData => {
+        $('#yearFilter').append(`<option value="${yearData.year}">${yearData.year}</option>`);
+    });
+
+    // Populate platform filter
+    data.platforms.forEach(platform => {
+        if (!$('#platformFilter option[value="' + platform.name + '"]').length) {
+            $('#platformFilter').append(`<option value="${platform.name}">${platform.name}</option>`);
+        }
+    });
+
+    function updateCharts(year = 'all') {
+        const filteredGrowth = year === 'all' ? data.growth : data.growth.filter(d => d.year == year);
+        const shares = year === 'all' ? data.marketShare : {[year]: data.marketShare[year]};
+
+        // Line Chart
+        new Chart(document.getElementById('lineChart'), {
+            type: 'line',
+            data: {
+                labels: filteredGrowth.map(d => d.year),
+                datasets: [{
+                    label: 'Growth in Digital Art Sales (%)',
+                    data: filteredGrowth.map(d => d.growth),
+                    borderColor: 'blue',
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    yAxes: [{ticks: {beginAtZero: true}}]
+                },
+                tooltips: {
+                    callbacks: {
+                        label: (tooltipItem) => `${tooltipItem.yLabel}%`
+                    }
+                }
+            }
+        });
+
+        // Pie Chart
+        const pieCtx = document.getElementById('pieChart').getContext('2d');
+        Object.keys(shares).forEach(year => {
+            new Chart(pieCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Digital', 'Traditional'],
+                    datasets: [{
+                        data: [shares[year].digital, shares[year].traditional],
+                        backgroundColor: ['#FF6384', '#36A2EB']
+                    }]
+                },
+                options: {
+                    title: {
+                        display: true,
+                        text: `Market Share in ${year}`
+                    },
+                    responsive: true
+                }
+            });
+        });
+    }
+
+    function filterPlatform(platform = 'all') {
+        const filteredPlatforms = platform === 'all' ? data.platforms : data.platforms.filter(p => p.name === platform);
+
+        // Bubble Chart
+        new Chart(document.getElementById('bubbleChart'), {
+            type: 'bubble',
+            data: {
+                datasets: [{
+                    label: 'Digital Art Platforms',
+                    data: filteredPlatforms.map(p => ({
+                        x: p.year,
+                        y: p.share,
+                        r: Math.sqrt(p.sales) / 100, // Scaling the bubble size
+                        name: p.name
+                    })),
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)'
+                }]
+            },
+            options: {
+                scales: {
+                    xAxes: [{type: 'linear', position: 'bottom'}],
+                    yAxes: [{ticks: {beginAtZero: true}}]
+                },
+                tooltips: {
+                    callbacks: {
+                        label: (tooltipItem, data) => {
+                            const dataset = data.datasets[tooltipItem.datasetIndex];
+                            return `${dataset.data[tooltipItem.index].name}: Share ${dataset.data[tooltipItem.index].y}%, Sales: $${dataset.data[tooltipItem.index].r * 100}`;
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Initial chart rendering
+    updateCharts();
+    filterPlatform();
+</script>
+
+</body>
+</html>
