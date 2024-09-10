@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pizza Delivery Dash</title>
+<style>
+    body {
+        font-family: 'Arial', sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background: linear-gradient(135deg, #f8cdda, #1d2b64);
+        margin: 0;
+        overflow: hidden;
+    }
+
+    #game-container {
+        position: relative;
+        width: 80vw;
+        max-width: 800px;
+        height: 80vh;
+        max-height: 600px;
+        background: url('https://media.istockphoto.com/id/522379689/vector/board-game-with-path-on-the-city.jpg?s=612x612&w=0&k=20&c=ide0ukB6pR8UYQE9y3oLpaCvdMXmNV2Kp-w6jRzguEY=') no-repeat;
+        background-size: cover;
+        border-radius: 15px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+    }
+
+    #timer, #score, #highScore {
+        position: absolute;
+        top: 20px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: white;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    #timer { left: 20px; }
+    #score { left: 50%; transform: translateX(-50%); }
+    #highScore { right: 20px; }
+
+    #pizza {
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        width: 60px;
+        height: 60px;
+        background-image: url('https://freesvg.org/storage/img/thumb/pizza2-1447860.png');
+        background-size: cover;
+        cursor: grab;
+        transition: transform 0.3s ease;
+    }
+
+    #pizza:active {
+        cursor: grabbing;
+        transform: scale(1.1);
+    }
+
+    .house {
+        position: absolute;
+        width: 60px;
+        height: 60px;
+        background-image: url('https://freesvg.org/storage/img/thumb/village-house.png');
+        background-size: cover;
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+    }
+
+    .house:hover {
+        transform: scale(1);
+    }
+
+    #endGame, #pauseMenu, #splashScreen {
+        display: none;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(255, 255, 255, 0.95);
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+        text-align: center;
+        z-index: 10;
+    }
+
+    #endGame h2, #pauseMenu h2, #splashScreen h2 {
+        font-size: 2rem;
+        color: #333;
+    }
+
+    #endGame p, #pauseMenu p, #splashScreen p {
+        font-size: 1.125rem;
+        margin: 10px 0;
+        color: #555;
+    }
+
+    #endGame button, #pauseMenu button, #splashScreen button {
+        padding: 10px 20px;
+        font-size: 1rem;
+        font-weight: bold;
+        color: white;
+        background-color: #ff5e57;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    #endGame button:hover, #pauseMenu button:hover, #splashScreen button:hover {
+        background-color: #ff3e37;
+    }
+</style>
+</head>
+<body>
+    <div id="timer">Time: 60</div>
+    <div id="score">Score: 0</div>
+    <div id="highScore">High Score: 0</div>
+    <div id="game-container">   
+        <div id="pizza" draggable="true"></div>
+        <div id="endGame">
+            <h2>Game Over!</h2>
+            <p>Your Score: <span id="finalScore"></span></p>
+            <p>High Score: <span id="displayHighScore"></span></p>
+            <button onclick="restartGame()">Play Again</button>
+        </div>
+        <div id="pauseMenu">
+            <h2>Game Paused</h2>
+            <button onclick="resumeGame()">Resume</button>
+            <button onclick="restartGame()">Restart</button>
+        </div>
+        <div id="splashScreen">
+            <h2>Welcome to Pizza Delivery Dash!</h2>
+            <p>Drag the pizza to the houses to score points.</p>
+            <button onclick="startGame()">Start Game</button>
+        </div>
+    </div>
+    
+    <!-- Include sound effects and background music -->
+    <audio id="gameMusic" src="path/to/background-music.mp3" loop></audio>
+    <audio id="scoreSound" src="path/to/score-sound.mp3"></audio>
+    <audio id="gameOverSound" src="path/to/game-over-sound.mp3"></audio>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        let score = 0;
+        let highScore = parseInt(localStorage.getItem('pizzaHighScore')) || 0;
+        let timer = 60;
+        let houseSpawnInterval = 2000;
+        let countdown;
+        let gamePaused = false;
+
+        const gameContainer = document.getElementById('game-container');
+        const pizza = document.getElementById('pizza');
+        const timerDisplay = document.getElementById('timer');
+        const scoreDisplay = document.getElementById('score');
+        const highScoreDisplay = document.getElementById('highScore');
+        const endGameDisplay = document.getElementById('endGame');
+        const finalScoreDisplay = document.getElementById('finalScore');
+        const displayHighScore = document.getElementById('displayHighScore');
+        const pauseMenuDisplay = document.getElementById('pauseMenu');
+        const splashScreen = document.getElementById('splashScreen');
+        const gameMusic = document.getElementById('gameMusic');
+        const scoreSound = document.getElementById('scoreSound');
+        const gameOverSound = document.getElementById('gameOverSound');
+
+        highScoreDisplay.textContent = `High Score: ${highScore}`;
+
+        function startGame() {
+            splashScreen.style.display = 'none';
+            gameMusic.play();
+            startTimer();
+            startHouseSpawning();
+        }
+
+        function startTimer() {
+            countdown = setInterval(() => {
+                if (!gamePaused) {
+                    timer--;
+                    timerDisplay.textContent = `Time: ${timer}`;
+                    if (timer <= 0) {
+                        clearInterval(countdown);
+                        endGame();
+                        disablePizza();
+                    }
+                }
+            }, 1000);
+        }
+
+        function spawnHouse() {
+            const house = document.createElement('div');
+            house.className = 'house';
+            house.style.top = `${Math.random() * (gameContainer.clientHeight - 60)}px`;
+            house.style.left = `${Math.random() * (gameContainer.clientWidth - 60)}px`;
+            gameContainer.appendChild(house);
+
+            house.addEventListener('dragover', (e) => {
+                e.preventDefault();
+            });
+
+            house.addEventListener('drop', (e) => {
+                e.preventDefault();
+                if (e.target.className === 'house' && pizza.getAttribute('draggable') === 'true') {
+                    score++;
+                    scoreDisplay.textContent = `Score: ${score}`;
+                    scoreSound.play();
+                    gameContainer.removeChild(house);
+                    resetPizzaPosition();
+                }
+            });
+        }
+
+        function resetPizzaPosition() {
+            pizza.style.bottom = '10px';
+            pizza.style.left = '50%';
+        }
+
+        function startHouseSpawning() {
+            spawnHouse();
+            let interval = setInterval(() => {
+                if (timer > 0 && !gamePaused) {
+                    spawnHouse();
+                    houseSpawnInterval = Math.max(500, houseSpawnInterval - 50);
+                } else {
+                    clearInterval(interval);
+                }
+            }, houseSpawnInterval);
+        }
+
+        function endGame() {
+            endGameDisplay.style.display = 'block';
+            gameMusic.pause();
+            gameOverSound.play();
+            finalScoreDisplay.textContent = score;
+            displayHighScore.textContent = highScore;
+            if (score > highScore) {
+                localStorage.setItem('pizzaHighScore', score);
+                highScore = score;
+                highScoreDisplay.textContent = `High Score: ${highScore}`;
+            }
+        }
+
+        function disablePizza() {
+            pizza.setAttribute('draggable', 'false');
+            pizza.style.cursor = 'not-allowed';
+        }
+
+        function restartGame() {
+            location.reload();
+        }
+
+        function pauseGame() {
+            clearInterval(countdown);
+            gameMusic.pause();
+            pauseMenuDisplay.style.display = 'block';
+            gamePaused = true;
+        }
+
+        function resumeGame() {
+            startTimer();
+            startHouseSpawning();
+            pauseMenuDisplay.style.display = 'none';
+            gameMusic.play();
+            gamePaused = false;
+        }
+
+        pizza.addEventListener('dragstart', (e) => {
+            if (pizza.getAttribute('draggable') === 'true') {
+                e.dataTransfer.setData('text/plain', '');
+            } else {
+                e.preventDefault();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (gamePaused) {
+                    resumeGame();
+                } else {
+                    pauseGame();
+                }
+            }
+        });
+
+        // Automatically start the game with splash screen
+        splashScreen.style.display = 'block';
+        document.querySelector('#splashScreen button').addEventListener('click', startGame);
+    });
+    </script>
+</body>
+</html>

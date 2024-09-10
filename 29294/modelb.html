@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pizza Delivery Game</title>
+<style>
+  body {
+    margin: 0;
+    font-family: 'Arial', sans-serif;
+    background-color: #f0f0f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+  }
+  #gameArea {
+    width: 800px;
+    height: 600px;
+    background: #fff;
+    border: 2px solid #333;
+    position: relative;
+    overflow: hidden;
+  }
+  #pizza {
+    width: 50px;
+    height: 50px;
+    background: url('pizza.png') no-repeat center center;
+    background-size: contain;
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    cursor: move;
+  }
+  .house {
+    width: 60px;
+    height: 60px;
+    background: url('house.png') no-repeat center center;
+    background-size: contain;
+    position: absolute;
+  }
+  #timer, #scoreBoard {
+    position: absolute;
+    top: 10px;
+    font-size: 24px;
+    z-index: 10;
+  }
+  #timer { left: 10px; }
+  #scoreBoard { right: 10px; }
+  #endGame {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.8);
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div id="gameArea">
+  <div id="timer">Time: 60</div>
+  <div id="scoreBoard">Score: 0</div>
+  <div id="pizza"></div>
+  <div id="endGame">
+    <h2>Game Over!</h2>
+    <p>Your Score: <span id="finalScore"></span></p>
+    <p>High Score: <span id="highScore"></span></p>
+  </div>
+</div>
+
+<script>
+// Game setup
+const gameArea = document.getElementById('gameArea');
+const pizza = document.getElementById('pizza');
+const timerDisplay = document.getElementById('timer');
+const scoreDisplay = document.getElementById('scoreBoard');
+const endGameDisplay = document.getElementById('endGame');
+const finalScoreDisplay = document.getElementById('finalScore');
+const highScoreDisplay = document.getElementById('highScore');
+
+let score = 0;
+let houses = [];
+let gameInterval;
+let houseSpawnInterval;
+let timeLeft = 60;
+
+// Drag functionality
+let isDragging = false;
+let offsetX, offsetY;
+
+document.addEventListener('mousedown', (e) => {
+  if (e.target === pizza) {
+    isDragging = true;
+    offsetX = e.clientX - pizza.offsetLeft;
+    offsetY = e.clientY - pizza.offsetTop;
+  }
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (isDragging) {
+    e.preventDefault();
+    pizza.style.left = `${e.clientX - offsetX}px`;
+    pizza.style.top = `${e.clientY - offsetY}px`;
+  }
+});
+
+document.addEventListener('mouseup', () => {
+  if (isDragging) {
+    isDragging = false;
+    checkDelivery();
+  }
+});
+
+function checkDelivery() {
+  houses.forEach((house, index) => {
+    if (collision(pizza, house)) {
+      score++;
+      scoreDisplay.textContent = `Score: ${score}`;
+      houses.splice(index, 1);
+      gameArea.removeChild(house);
+      resetPizzaPosition();
+    }
+  });
+}
+
+function collision($div1, $div2) {
+  let x1 = $div1.offsetLeft;
+  let y1 = $div1.offsetTop;
+  let h1 = $div1.clientHeight;
+  let w1 = $div1.clientWidth;
+  let b1 = y1 + h1;
+  let r1 = x1 + w1;
+  let x2 = $div2.offsetLeft;
+  let y2 = $div2.offsetTop;
+  let h2 = $div2.clientHeight;
+  let w2 = $div2.clientWidth;
+  let b2 = y2 + h2;
+  let r2 = x2 + w2;
+
+  return !(b1 < y2 || y1 > b2 || r1 < x2 || x1 > r2);
+}
+
+function resetPizzaPosition() {
+  pizza.style.left = '50%';
+  pizza.style.top = 'auto';
+  pizza.style.bottom = '10px';
+}
+
+function spawnHouse() {
+  const house = document.createElement('div');
+  house.className = 'house';
+  house.style.left = `${Math.random() * (gameArea.clientWidth - 60)}px`;
+  house.style.top = `${Math.random() * (gameArea.clientHeight - 150)}px`;
+  gameArea.appendChild(house);
+  houses.push(house);
+}
+
+function updateTimer() {
+  if (timeLeft > 0) {
+    timeLeft--;
+    timerDisplay.textContent = `Time: ${timeLeft}`;
+  } else {
+    endGame();
+  }
+}
+
+function endGame() {
+  clearInterval(gameInterval);
+  clearInterval(houseSpawnInterval);
+  endGameDisplay.style.display = 'block';
+  finalScoreDisplay.textContent = score;
+  let highScore = localStorage.getItem('pizzaHighScore') || 0;
+  if (score > highScore) {
+    localStorage.setItem('pizzaHighScore', score);
+    highScore = score;
+  }
+  highScoreDisplay.textContent = highScore;
+}
+
+function startGame() {
+  score = 0;
+  scoreDisplay.textContent = `Score: ${score}`;
+  timeLeft = 60;
+  houses.forEach(house => gameArea.removeChild(house));
+  houses = [];
+  spawnHouse();
+  gameInterval = setInterval(updateTimer, 1000);
+  houseSpawnInterval = setInterval(spawnHouse, 5000);
+  updateTimer();
+}
+
+startGame();
+</script>
+</body>
+</html>
