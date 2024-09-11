@@ -171,6 +171,37 @@
     .mini-game button:hover {
         background-color: #218838;
     }
+    .opponent-list, .duel-info {
+        margin-top: 20px;
+        padding: 10px;
+        background: #e9e9e9;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .opponent-list h3, .duel-info h3 {
+        margin-top: 0;
+    }
+    .opponent-item, .duel-item {
+        padding: 10px;
+        background: #f1f1f1;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        font-size: 16px;
+    }
+    .opponent-item button, .duel-item button {
+        margin-top: 10px;
+        padding: 5px 10px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        color: white;
+        background-color: #007bff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        transition: background-color 0.3s;
+    }
+    .opponent-item button:hover, .duel-item button:hover {
+        background-color: #0056b3;
+    }
 </style>
 </head>
 <body>
@@ -207,44 +238,84 @@
                 <!-- Dynamic leaderboard content -->
             </ul>
         </div>
-        <div class="duel">
-            <h3>Multiplayer Duels</h3>
-            <div class="button-group">
-                <button onclick="startDuel()">Challenge a Friend</button>
-                <button onclick="findOpponent()">Find Global Opponent</button>
-            </div>
-        </div>
         <div class="vocabulary-adventure" id="vocabularyAdventure">
             <h3>Vocabulary Adventure</h3>
             <div class="mini-game">
                 <button onclick="startWordMatching()">Start Word Matching</button>
+                <div id="wordMatchingGame" style="display:none;">
+                    <p>Match the words with their definitions:</p>
+                    <ul id="wordMatchingList">
+                        <!-- Word matching content will be populated here -->
+                    </ul>
+                    <button onclick="checkWordMatching()">Check Answers</button>
+                </div>
             </div>
             <div class="mini-game">
                 <button onclick="startFillInTheBlanks()">Start Fill-in-the-Blanks</button>
+                <div id="fillInTheBlanksGame" style="display:none;">
+                    <p>Complete the sentences:</p>
+                    <p>The car moves very <input type="text" id="blank1" placeholder="___">.</p>
+                    <p>He placed the book on the <input type="text" id="blank2" placeholder="___">.</p>
+                    <button onclick="checkFillInTheBlanks()">Submit Answers</button>
+                </div>
             </div>
             <div class="mini-game">
                 <button onclick="startWordDefinitions()">Start Word Definitions</button>
+                <div id="wordDefinitionsGame" style="display:none;">
+                    <p>What does the word "Eloquent" mean?</p>
+                    <label><input type="radio" name="wordDefinition" value="A"> To express oneself clearly and effectively</label><br>
+                    <label><input type="radio" name="wordDefinition" value="B"> To move with quick, smooth motions</label><br>
+                    <label><input type="radio" name="wordDefinition" value="C"> A large, muscular structure</label><br>
+                    <button onclick="checkWordDefinitions()">Submit Answer</button>
+                </div>
+            </div>
+        </div>
+        <div class="multiplayer-duels">
+            <h3>Multiplayer Duels</h3>
+            <div class="button-group">
+                <button onclick="findOpponent()">Find Opponent</button>
+                <button onclick="startDuel()">Challenge Friend</button>
+            </div>
+            <div class="opponent-list" id="opponentList">
+                <h3>Available Opponents</h3>
+                <div class="opponent-item">
+                    <span>Opponent 1</span>
+                    <button onclick="challengeOpponent('Opponent 1')">Challenge</button>
+                </div>
+                <div class="opponent-item">
+                    <span>Opponent 2</span>
+                    <button onclick="challengeOpponent('Opponent 2')">Challenge</button>
+                </div>
+                <div class="opponent-item">
+                    <span>Opponent 3</span>
+                    <button onclick="challengeOpponent('Opponent 3')">Challenge</button>
+                </div>
+            </div>
+            <div class="duel-info" id="duelInfo">
+                <h3>Current Duel</h3>
+                <div id="duelStatus">
+                    <!-- Duel status will be updated here -->
+                    <p>No active duel. Find an opponent to start a duel.</p>
+                </div>
             </div>
         </div>
     </div>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/socket.io-client@2/dist/socket.io.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.139.2/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/socket.io@4.0.0/dist/socket.io.min.js"></script>
 <script>
-    // Initialize 3D World
+    // Three.js Scene Setup
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth / 2, window.innerHeight);
     document.getElementById('world').appendChild(renderer.domElement);
-
-    // Basic setup for a rotating cube in the world
     const geometry = new THREE.BoxGeometry();
     const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
     const cube = new THREE.Mesh(geometry, material);
     scene.add(cube);
     camera.position.z = 5;
-
     function animate() {
         requestAnimationFrame(animate);
         cube.rotation.x += 0.01;
@@ -261,15 +332,53 @@
     }
 
     function startWordMatching() {
-        alert('Word Matching game started!');
+        document.getElementById('wordMatchingGame').style.display = 'block';
+        document.getElementById('fillInTheBlanksGame').style.display = 'none';
+        document.getElementById('wordDefinitionsGame').style.display = 'none';
+
+        const wordMatchingList = document.getElementById('wordMatchingList');
+        wordMatchingList.innerHTML = `
+            <li>Apple - A fruit that is often red or green.</li>
+            <li>Cat - A small domesticated carnivorous mammal.</li>
+            <li>Book - A set of written or printed pages.</li>
+            <li>Run - To move swiftly on foot.</li>
+        `;
+    }
+
+    function checkWordMatching() {
+        alert('Word Matching game checked!');
     }
 
     function startFillInTheBlanks() {
-        alert('Fill-in-the-Blanks game started!');
+        document.getElementById('fillInTheBlanksGame').style.display = 'block';
+        document.getElementById('wordMatchingGame').style.display = 'none';
+        document.getElementById('wordDefinitionsGame').style.display = 'none';
+    }
+
+    function checkFillInTheBlanks() {
+        const blank1 = document.getElementById('blank1').value.trim().toLowerCase();
+        const blank2 = document.getElementById('blank2').value.trim().toLowerCase();
+
+        if (blank1 === 'quick' && blank2 === 'mat') {
+            alert('Correct!');
+        } else {
+            alert('Incorrect, try again.');
+        }
     }
 
     function startWordDefinitions() {
-        alert('Word Definitions game started!');
+        document.getElementById('wordDefinitionsGame').style.display = 'block';
+        document.getElementById('wordMatchingGame').style.display = 'none';
+        document.getElementById('fillInTheBlanksGame').style.display = 'none';
+    }
+
+    function checkWordDefinitions() {
+        const selectedOption = document.querySelector('input[name="wordDefinition"]:checked');
+        if (selectedOption && selectedOption.value === 'A') {
+            alert('Correct! "Eloquent" means expressing yourself readily, clearly, and effectively.');
+        } else {
+            alert('Incorrect. Try again!');
+        }
     }
 
     // Pronunciation Practice
@@ -317,23 +426,35 @@
 
     function startDuel() {
         socket.emit('challenge', { type: 'friend' });
-        alert('Challenge sent to your friend!');
+        document.getElementById('duelStatus').innerHTML = `<p>Challenge sent to your friend!</p>`;
     }
 
     function findOpponent() {
-        socket.emit('findOpponent');
-        alert('Searching for an opponent...');
+        document.getElementById('duelStatus').innerHTML = `<p>Searching for an opponent...</p>`;
+        // Simulate finding an opponent
+        setTimeout(() => {
+            document.getElementById('duelStatus').innerHTML = `<p>Opponent found! Ready to start the duel.</p>`;
+        }, 2000); // Simulate a delay
+    }
+
+    function challengeOpponent(opponentName) {
+        document.getElementById('duelStatus').innerHTML = `<p>Challenging ${opponentName}...</p>`;
+        // Simulate a challenge process
+        setTimeout(() => {
+            document.getElementById('duelStatus').innerHTML = `<p>${opponentName} has been challenged. Waiting for response...</p>`;
+        }, 2000); // Simulate a delay
     }
 
     function updateLeaderboard(data) {
         const leaderboardList = document.getElementById('leaderboardList');
         leaderboardList.innerHTML = '';
-        data.forEach(entry => {
-            const li = document.createElement('li');
-            li.textContent = `${entry.name}: ${entry.score}`;
-            leaderboardList.appendChild(li);
+        data.forEach((entry, index) => {
+            const listItem = document.createElement('li');
+            listItem.textContent = `${index + 1}. ${entry.name} - ${entry.score}`;
+            leaderboardList.appendChild(listItem);
         });
     }
+
 </script>
 </body>
 </html>
