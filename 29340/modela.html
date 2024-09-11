@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Futuristic Vehicle Design Widget</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.15/dist/tailwind.min.css">
+<style>
+    body { font-family: 'Arial', sans-serif; background: #f4f4f7; }
+    .widget-container { max-width: 1200px; margin: auto; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    #vehicleModel { width: 100%; height: 400px; background: #e0e0e0; }
+    .material-item, .condition-item { cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div class="widget-container p-4">
+    <h1 class="text-2xl font-bold mb-4">Futuristic Vehicle Design Widget</h1>
+    <div class="tabs bg-white rounded-lg shadow-lg p-2">
+        <button onclick="switchTab('aerodynamics')" class="tab-button">Aerodynamics</button>
+        <button onclick="switchTab('materials')" class="tab-button">Materials</button>
+        <button onclick="switchTab('environment')" class="tab-button">Environment</button>
+        <button onclick="switchTab('testing')" class="tab-button">Testing</button>
+    </div>
+
+    <div id="aerodynamics" class="tab-content active">
+        <div id="vehicleModel" class="mt-4">3D Model Here</div>
+        <button onclick="optimizeAerodynamics()">Optimize</button>
+    </div>
+
+    <div id="materials" class="tab-content">
+        <div class="grid grid-cols-3 gap-4">
+            <!-- Material items would be dynamically added here -->
+        </div>
+    </div>
+
+    <div id="environment" class="tab-content">
+        <div class="graph-area">Environmental Impact Graph</div>
+    </div>
+
+    <div id="testing" class="tab-content">
+        <select id="testConditions" onchange="updateTestingScenario()">
+            <option value="urban">Urban</option>
+            <option value="offroad">Off-Road</option>
+            <option value="highspeed">High Speed</option>
+        </select>
+        <div id="testResults">Test results will display here</div>
+    </div>
+</div>
+
+<script>
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        document.getElementById(tabName).classList.add('active');
+    }
+
+    function optimizeAerodynamics() {
+        alert('Aerodynamics optimized!'); // Placeholder for actual functionality
+    }
+
+    function updateTestingScenario() {
+        const scenario = document.getElementById('testConditions').value;
+        document.getElementById('testResults').innerText = `Testing in ${scenario} conditions...`;
+    }
+
+    // Simulated data for materials
+    const materials = [
+        { name: 'Carbon Nanotube Composite', ecoScore: 85 },
+        { name: 'Titanium Alloy', ecoScore: 60 },
+        // More materials...
+    ];
+
+    // Populate materials on page load
+    window.onload = function() {
+        const materialContainer = document.querySelector('#materials .grid');
+        materials.forEach(material => {
+            const div = document.createElement('div');
+            div.className = 'material-item bg-gray-200 p-2 rounded';
+            div.innerText = material.name;
+            div.onclick = () => selectMaterial(material);
+            materialContainer.appendChild(div);
+        });
+    }
+
+    function selectMaterial(material) {
+        alert(`Selected: ${material.name}. Eco Score: ${material.ecoScore}`);
+        // Update vehicle model with selected material
+    }
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<!-- Three.js would be used for the 3D model in a real application -->
+</body>
+</html>
