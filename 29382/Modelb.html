@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Concert Tracker</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.css" />
+    <style>
+        body { font-family: 'Arial', sans-serif; background: #f4f4f4; }
+        .widget-container { width: 300px; margin: 20px auto; background: white; padding: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .calendar { margin-top: 20px; }
+        .event-info, .artist-info { margin-top: 15px; }
+        .buy-ticket { background-color: #5cb85c; color: white; border: none; padding: 10px 15px; cursor: pointer; }
+        .buy-ticket:hover { background-color: #4cae4c; }
+    </style>
+</head>
+<body>
+
+<div class="widget-container">
+    <h2>Concert Tracker</h2>
+    <div id='calendar'></div>
+    <div class="event-info">
+        <h3 id="event-title">Select an event for details</h3>
+        <p id="event-date"></p>
+        <p id="event-venue"></p>
+        <button class="buy-ticket" onclick="buyTicket()">Buy Ticket</button>
+    </div>
+    <div class="artist-info">
+        <h4>Artist Info</h4>
+        <p id="artist-name"></p>
+        <p id="artist-genre"></p>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
+
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        header: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'month,listMonth'
+        },
+        events: 'loadConcertEvents.php', // Assume this PHP file fetches events from an API or database
+        eventClick: function(info) {
+            document.getElementById('event-title').innerText = info.event.title;
+            document.getElementById('event-date').innerText = info.event.start.toLocaleString();
+            document.getElementById('event-venue').innerText = info.event.extendedProps.venue;
+            document.getElementById('artist-name').innerText = info.event.extendedProps.artist;
+            document.getElementById('artist-genre').innerText = info.event.extendedProps.genre;
+            // Here you might want to store or use the ticket URL dynamically
+            window.currentEventUrl = info.event.extendedProps.ticketUrl;
+        }
+    });
+
+    calendar.render();
+
+    function buyTicket() {
+        if (window.currentEventUrl) {
+            window.open(window.currentEventUrl, '_blank');
+        } else {
+            alert('No ticket information available for this event.');
+        }
+    }
+});
+</script>
+
+</body>
+</html>

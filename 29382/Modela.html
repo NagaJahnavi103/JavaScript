@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Concert Tracker Widget</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body { font-family: 'Arial', sans-serif; background: #121212; color: #fff; }
+        .widget {
+            max-width: 800px; margin: 20px auto; padding: 20px; background: #1e1e1e; border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+        }
+        .search-form { margin-bottom: 20px; }
+        .search-form input, .search-form button { padding: 10px; margin: 5px; border: none; border-radius: 4px; }
+        .search-form input { background: #333; color: #fff; }
+        .search-form button { background: #007BFF; color: white; cursor: pointer; }
+        .concert-list { display: flex; flex-direction: column; }
+        .concert-item { 
+            background: #2a2a2a; margin: 10px 0; padding: 15px; border-left: 5px solid #007BFF; 
+            transition: transform 0.3s; 
+        }
+        .concert-item:hover { transform: scale(1.02); }
+        .calendar-view { margin-top: 20px; }
+        .icon { margin-right: 10px; }
+    </style>
+</head>
+<body>
+<div class="widget">
+    <h2>Live Concert Tracker</h2>
+    <div class="search-form">
+        <input type="text" id="artistSearch" placeholder="Search artist...">
+        <button onclick="searchConcert()"><i class="fas fa-search"></i> Search</button>
+    </div>
+    <div id="concertList" class="concert-list"></div>
+    <div id="calendarView" class="calendar-view"></div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+<script>
+    function searchConcert() {
+        const artist = $('#artistSearch').val();
+        // Here you would typically call an API to fetch concerts
+        // For demonstration, we'll simulate data
+        const simulatedData = [
+            {date: moment().add(1, 'days').format('YYYY-MM-DD'), artist: artist, venue: 'Local Pub'},
+            {date: moment().add(3, 'days').format('YYYY-MM-DD'), artist: artist, venue: 'City Arena'}
+        ];
+        displayConcerts(simulatedData);
+    }
+
+    function displayConcerts(concerts) {
+        $('#concertList').html('');
+        concerts.forEach(concert => {
+            $('#concertList').append(`
+                <div class="concert-item">
+                    <h3><i class="fas fa-music icon"></i>${concert.artist}</h3>
+                    <p><i class="fas fa-calendar-alt icon"></i>${moment(concert.date).format('MMMM Do YYYY')}</p>
+                    <p><i class="fas fa-map-marker-alt icon"></i>${concert.venue}</p>
+                </div>
+            `);
+        });
+    }
+
+    // Placeholder for calendar functionality
+    function updateCalendar() {
+        // Calendar integration would go here
+        console.log('Update calendar with concert dates');
+    }
+
+    // Initial load
+    $(document).ready(function() {
+        updateCalendar();
+    });
+</script>
+</body>
+</html>

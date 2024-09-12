@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Concert Tracker Widget</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/5.10.2/main.min.css">
+    <style>
+        body { font-family: 'Arial', sans-serif; background: #121212; color: #fff; }
+        .widget {
+            max-width: 900px; margin: 20px auto; padding: 20px; background: #1e1e1e; border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+        }
+        .search-form { margin-bottom: 20px; }
+        .search-form input, .search-form button { padding: 10px; margin: 5px; border: none; border-radius: 4px; }
+        .search-form input { background: #333; color: #fff; }
+        .search-form button { background: #007BFF; color: white; cursor: pointer; }
+        .concert-list { display: flex; flex-direction: column; }
+        .concert-item { 
+            background: #2a2a2a; margin: 10px 0; padding: 15px; border-left: 5px solid #007BFF; 
+            transition: transform 0.3s; position: relative; 
+        }
+        .concert-item:hover { transform: scale(1.02); }
+        .calendar-view { margin-top: 20px; }
+        .icon { margin-right: 10px; }
+        .artist-info { margin-top: 10px; font-size: 0.9em; color: #bbb; }
+        .ticket-link { 
+            margin-top: 10px; display: inline-block; padding: 10px; background: #28a745; color: white; 
+            border-radius: 4px; text-decoration: none; 
+            position: absolute; bottom: 15px; right: 15px; 
+            transition: background 0.3s;
+        }
+        .ticket-link:hover { background: #218838; }
+        .availability-status {
+            margin-top: 10px; font-weight: bold; color: #f39c12;
+        }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; }
+        .modal-content { background: #333; padding: 20px; border-radius: 8px; width: 80%; max-width: 500px; }
+        .modal-header, .modal-footer { margin-bottom: 10px; }
+        .modal-header h3 { margin: 0; }
+        .modal-body { margin-bottom: 10px; }
+        .modal-footer { text-align: right; }
+        .modal button { padding: 10px; border: none; border-radius: 4px; background: #007BFF; color: white; cursor: pointer; }
+        .modal button.close { background: #dc3545; }
+        .modal button.close:hover { background: #c82333; }
+        .seat-selection { margin-top: 10px; }
+        .payment-mode { margin-top: 20px; }
+        .seat-selection label, .payment-mode label { display: block; margin-bottom: 10px; }
+        .seat-selection select, .payment-mode select { padding: 10px; border-radius: 4px; border: 1px solid #ccc; width: 100%; }
+    </style>
+</head>
+<body>
+<div class="widget">
+    <h2>Live Concert Tracker</h2>
+    <div class="search-form">
+        <input type="text" id="artistSearch" placeholder="Search artist...">
+        <button onclick="searchConcert()"><i class="fas fa-search"></i> Search</button>
+    </div>
+    <div id="concertList" class="concert-list"></div>
+    <div id="calendarView" class="calendar-view"></div>
+</div>
+
+<!-- Modal Form -->
+<div id="ticketModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Purchase Tickets</h3>
+            <button class="close" onclick="closeModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <form id="ticketForm">
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required><br>
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required><br>
+                <label for="quantity">Quantity:</label>
+                <input type="number" id="quantity" name="quantity" min="1" required><br>
+                <div id="seatSection" class="seat-selection" style="display: none;">
+                    <label for="seat">Select Seat:</label>
+                    <select id="seat" name="seat">
+                        <!-- Options will be populated dynamically -->
+                    </select>
+                </div>
+                <div id="paymentSection" class="payment-mode" style="display: none;">
+                    <label for="paymentMode">Select Payment Mode:</label>
+                    <select id="paymentMode" name="paymentMode" required>
+                        <option value="creditCard">Credit Card</option>
+                        <option value="paypal">PayPal</option>
+                        <option value="bankTransfer">Bank Transfer</option>
+                    </select>
+                </div>
+                <input type="hidden" id="ticketLink" name="ticketLink">
+                <input type="submit" value="Submit">
+            </form>
+            <div id="formMessage"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="close" onclick="closeModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/5.10.2/main.min.js"></script>
+<script>
+    let currentTicketLink = '';
+
+    function searchConcert() {
+        const artist = $('#artistSearch').val();
+        // Simulate fetching concert data
+        const simulatedData = [
+            {date: moment().add(1, 'days').format('YYYY-MM-DD'), artist: artist, venue: 'Local Pub', artistInfo: 'Local band with a unique sound.', ticketLink: 'http://example.com/ticket1', availability: 'Available', price: '$25'},
+            {date: moment().add(3, 'days').format('YYYY-MM-DD'), artist: artist, venue: 'City Arena', artistInfo: 'Famous artist known for hit singles.', ticketLink: 'http://example.com/ticket2', availability: 'Limited Tickets', price: '$75'}
+        ];
+        displayConcerts(simulatedData);
+    }
+
+    function displayConcerts(concerts) {
+        $('#concertList').html('');
+        concerts.forEach(concert => {
+            $('#concertList').append(`
+                <div class="concert-item">
+                    <h3><i class="fas fa-music icon"></i>${concert.artist}</h3>
+                    <p><i class="fas fa-calendar-alt icon"></i>${moment(concert.date).format('MMMM Do YYYY')}</p>
+                    <p><i class="fas fa-map-marker-alt icon"></i>${concert.venue}</p>
+                    <p class="artist-info">${concert.artistInfo}</p>
+                    <p class="availability-status">${concert.availability}</p>
+                    <p><strong>Price:</strong> ${concert.price}</p>
+                    <a href="#" class="ticket-link" onclick="openModal('${concert.ticketLink}'); return false;">Buy Tickets</a>
+                </div>
+            `);
+        });
+        updateCalendar(concerts);
+    }
+
+    function openModal(ticketLink) {
+        currentTicketLink = ticketLink;
+        $('#ticketModal').show();
+        $('#seatSection').show();
+        $('#paymentSection').show();
+    }
+
+    function closeModal() {
+        $('#ticketModal').hide();
+    }
+
+    $('#quantity').on('input', function() {
+        const quantity = $(this).val();
+        // Populate seat options based on quantity
+        let seatOptions = '';
+        for (let i = 1; i <= quantity; i++) {
+            seatOptions += `<option value="seat${i}">Seat ${i}</option>`;
+        }
+        $('#seat').html(seatOptions);
+    });
+
+    $('#ticketForm').on('submit', function(event) {
+        event.preventDefault();
+        const name = $('#name').val();
+        const email = $('#email').val();
+        const quantity = $('#quantity').val();
+        const seat = $('#seat').val();
+        const paymentMode = $('#paymentMode').val();
+
+        // Simulate form submission
+        $('#formMessage').html(`<p>Thank you, ${name}! Your order for ${quantity} tickets (Seat: ${seat}) has been received. We will send a confirmation to ${email}. Payment Mode: ${paymentMode}.</p>`);
+        $('#formMessage').css('color', '#28a745');
+
+        // Here, you would typically send the form data to a server.
+        console.log('Form submitted:', { name, email, quantity, seat, paymentMode, ticketLink: currentTicketLink });
+        
+        // Hide the modal
+        setTimeout(() => closeModal(), 2000);
+    });
+
+    function updateCalendar(concerts) {
+        const calendarEl = document.getElementById('calendarView');
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            events: concerts.map(concert => ({
+                title: `${concert.artist} at ${concert.venue}`,
+                date: concert.date,
+                url: concert.ticketLink
+            })),
+            eventClick: function(info) {
+                window.open(info.event.url, '_blank');
+                info.jsEvent.preventDefault();
+            }
+        });
+        calendar.render();
+    }
+
+    // Initial load
+    $(document).ready(function() {
+        // Placeholder for music app integration
+        console.log('Music app integration placeholder');
+    });
+</script>
+</body>
+</html>
