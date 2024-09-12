@@ -1,339 +1,160 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Language Learning Adventure</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
-<style>
-    body { 
-        font-family: 'Arial', sans-serif; 
-        background: #f0f0f0; 
-        margin: 0; 
-        overflow: hidden;
-    }
-    #app {
-        display: grid;
-        grid-template-columns: 1fr 3fr;
-        height: 100vh;
-    }
-    #world { 
-        background: #333; 
-        overflow: hidden; 
-    }
-    #ui { 
-        background: #fff; 
-        overflow-y: auto;
-        padding: 20px;
-        box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
-        display: flex;
-        flex-direction: column;
-    }
-    .avatar {
-        background: #e9e9e9;
-        margin-bottom: 20px;
-        padding: 10px;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    .avatar img {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-    }
-    .avatar span {
-        font-size: 18px;
-        font-weight: bold;
-    }
-    .map {
-        width: 100%;
-        height: 300px;
-        background: url('map-image.jpg') no-repeat center center;
-        background-size: cover;
-        border-radius: 8px;
-        margin-bottom: 20px;
-        position: relative;
-        overflow: hidden;
-    }
-    .map-button {
-        position: absolute;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        padding: 10px 20px;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        transition: background-color 0.3s;
-    }
-    .map-button:hover {
-        background-color: #0056b3;
-    }
-    .progress-bar {
-        width: 100%;
-        background-color: #ddd;
-        border-radius: 4px;
-        margin: 10px 0;
-    }
-    .progress {
-        height: 30px;
-        background-color: #4CAF50;
-        text-align: center;
-        line-height: 30px;
-        color: white;
-        border-radius: 4px;
-        transition: width 0.3s;
-    }
-    .dialogue {
-        padding: 10px;
-        background: #f9f9f9;
-        border-left: 4px solid #007bff;
-        margin-bottom: 10px;
-        border-radius: 4px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    .cultural-quiz {
-        margin-top: 20px;
-        padding: 10px;
-        background: #e9e9e9;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    .cultural-quiz p {
-        font-size: 16px;
-        margin-bottom: 10px;
-    }
-    .cultural-quiz label {
-        display: block;
-        margin-bottom: 5px;
-    }
-    .button-group button {
-        margin-right: 10px;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 16px;
-        color: white;
-        background-color: #007bff;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        transition: background-color 0.3s;
-    }
-    .button-group button:hover {
-        background-color: #0056b3;
-    }
-    .leaderboard ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-    .leaderboard li {
-        padding: 10px;
-        background: #f1f1f1;
-        border-bottom: 1px solid #ddd;
-        border-radius: 4px;
-        margin-bottom: 5px;
-        font-size: 16px;
-    }
-    .leaderboard li:first-child {
-        margin-top: 0;
-    }
-    .vocabulary-adventure {
-        margin-top: 20px;
-        padding: 10px;
-        background: #e9e9e9;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    .vocabulary-adventure h3 {
-        margin-top: 0;
-    }
-    .mini-game {
-        margin-bottom: 10px;
-    }
-    .mini-game button {
-        display: block;
-        width: 100%;
-        padding: 10px;
-        background-color: #28a745;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        transition: background-color 0.3s;
-    }
-    .mini-game button:hover {
-        background-color: #218838;
-    }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Educational Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Arial', sans-serif; }
+        .chart-container { width: 100%; height: 300px; }
+        .sidebar { height: 100vh; position: sticky; top: 0; }
+        .filter { margin: 10px 0; }
+    </style>
 </head>
-<body>
-<div id="app">
-    <div id="world"></div>
-    <div id="ui">
-        <div class="avatar">
-            <img src="avatar.png" alt="Your Avatar">
-            <span>Player Name</span>
-        </div>
-        <div class="map">
-            <button class="map-button" onclick="startVocabularyAdventure()">Start Vocabulary Adventure</button>
-        </div>
-        <div class="game-section" id="pronunciation">
-            <h3>Pronunciation Practice</h3>
-            <button onclick="startPronunciation()">Start Speaking</button>
-            <div class="progress-bar">
-                <div class="progress" id="pronunciationProgress">0%</div>
+<body class="bg-gray-100">
+
+<div class="container mx-auto grid grid-cols-12 gap-4 p-4">
+    <!-- Sidebar -->
+    <div class="col-span-2 bg-white shadow rounded p-4 sidebar">
+        <h2 class="text-xl font-semibold mb-4">Navigation</h2>
+        <ul class="space-y-2">
+            <li><a href="#grades" class="text-blue-500 hover:underline">Grades</a></li>
+            <li><a href="#performance" class="text-blue-500 hover:underline">Performance</a></li>
+            <li><a href="#students" class="text-blue-500 hover:underline">Top Students</a></li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-span-10">
+        <header class="bg-blue-600 text-white p-4 rounded mb-4">
+            <h1 class="text-3xl font-bold">Educational Insights Dashboard</h1>
+            <p>A comprehensive view of student performance and statistics.</p>
+        </header>
+
+        <!-- Bar Chart - Grade Distribution -->
+        <section id="grades" class="bg-white p-4 rounded shadow mb-4">
+            <h2 class="text-2xl font-semibold mb-2">Grade Distribution by Subject</h2>
+            <div class="filter">
+                <label class="block text-gray-700">Filter by Subject: </label>
+                <select id="barFilter" class="border rounded p-2" onchange="updateBarChart()">
+                    <option value="all">All Subjects</option>
+                    <option value="Math">Math</option>
+                    <option value="Science">Science</option>
+                </select>
             </div>
-        </div>
-        <div class="cultural" id="cultural">
-            <h3>Cultural Immersion</h3>
-            <div class="dialogue" id="culturalDialogue">
-                <!-- Cultural scenario dialogues go here -->
+            <div class="chart-container"><canvas id="barChart"></canvas></div>
+        </section>
+
+        <!-- Pie Chart - Grade Categories -->
+        <section class="bg-white p-4 rounded shadow mb-4">
+            <h2 class="text-2xl font-semibold mb-2">Student Grades Overview</h2>
+            <div class="chart-container"><canvas id="pieChart"></canvas></div>
+        </section>
+
+        <!-- Line Graph - Average Grades Trend -->
+        <section id="performance" class="bg-white p-4 rounded shadow mb-4">
+            <h2 class="text-2xl font-semibold mb-2">Average Grade Trends</h2>
+            <div class="filter">
+                <label class="block text-gray-700">Filter by Year: </label>
+                <select id="lineFilter" class="border rounded p-2" onchange="updateLineChart()">
+                    <option value="2023">2023</option>
+                    <option value="2022">2022</option>
+                </select>
             </div>
-            <button onclick="loadCulturalScenario()">Load Scenario</button>
-            <div class="cultural-quiz" id="culturalQuiz">
-                <!-- Quiz will be populated here -->
-            </div>
-        </div>
-        <div class="leaderboard">
-            <h3>Leaderboard</h3>
-            <ul id="leaderboardList">
-                <!-- Dynamic leaderboard content -->
-            </ul>
-        </div>
-        <div class="duel">
-            <h3>Multiplayer Duels</h3>
-            <div class="button-group">
-                <button onclick="startDuel()">Challenge a Friend</button>
-                <button onclick="findOpponent()">Find Global Opponent</button>
-            </div>
-        </div>
-        <div class="vocabulary-adventure" id="vocabularyAdventure">
-            <h3>Vocabulary Adventure</h3>
-            <div class="mini-game">
-                <button onclick="startWordMatching()">Start Word Matching</button>
-            </div>
-            <div class="mini-game">
-                <button onclick="startFillInTheBlanks()">Start Fill-in-the-Blanks</button>
-            </div>
-            <div class="mini-game">
-                <button onclick="startWordDefinitions()">Start Word Definitions</button>
-            </div>
-        </div>
+            <div class="chart-container"><canvas id="lineChart"></canvas></div>
+        </section>
+
+        <!-- Top Students Table -->
+        <section id="students" class="bg-white p-4 rounded shadow">
+            <h2 class="text-2xl font-semibold mb-2">Top 10 Students</h2>
+            <table class="table-auto w-full border-collapse">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="px-4 py-2 border">Rank</th>
+                        <th class="px-4 py-2 border">Name</th>
+                        <th class="px-4 py-2 border">Subject</th>
+                        <th class="px-4 py-2 border">Grade</th>
+                    </tr>
+                </thead>
+                <tbody id="topStudents"></tbody>
+            </table>
+        </section>
     </div>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/socket.io-client@2/dist/socket.io.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Initialize 3D World
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth / 2, window.innerHeight);
-    document.getElementById('world').appendChild(renderer.domElement);
+    const ctxBar = document.getElementById('barChart').getContext('2d');
+    const ctxPie = document.getElementById('pieChart').getContext('2d');
+    const ctxLine = document.getElementById('lineChart').getContext('2d');
 
-    // Basic setup for a rotating cube in the world
-    const geometry = new THREE.BoxGeometry();
-    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    const cube = new THREE.Mesh(geometry, material);
-    scene.add(cube);
-    camera.position.z = 5;
+    // Dummy data
+    const subjects = ['Math', 'Science', 'English', 'History'];
+    const grades = ['A', 'B', 'C', 'D', 'F'];
+    const students = Array.from({length: 100}, (_, i) => ({
+        name: `Student ${i+1}`,
+        subject: subjects[Math.floor(Math.random() * subjects.length)],
+        grade: grades[Math.floor(Math.random() * grades.length)],
+        year: Math.random() > 0.5 ? '2023' : '2022'
+    }));
 
-    function animate() {
-        requestAnimationFrame(animate);
-        cube.rotation.x += 0.01;
-        cube.rotation.y += 0.01;
-        renderer.render(scene, camera);
-    }
-    animate();
-
-    // Vocabulary Adventure Functions
-    function startVocabularyAdventure() {
-        document.getElementById('vocabularyAdventure').style.display = 'block';
-        document.getElementById('cultural').style.display = 'none';
-        document.getElementById('pronunciation').style.display = 'none';
-    }
-
-    function startWordMatching() {
-        alert('Word Matching game started!');
-    }
-
-    function startFillInTheBlanks() {
-        alert('Fill-in-the-Blanks game started!');
-    }
-
-    function startWordDefinitions() {
-        alert('Word Definitions game started!');
-    }
-
-    // Pronunciation Practice
-    function startPronunciation() {
-        document.getElementById('pronunciationProgress').style.width = '70%';
-        document.getElementById('pronunciationProgress').textContent = '70%';
-    }
-
-    // Cultural Immersion
-    function loadCulturalScenario() {
-        document.getElementById('culturalDialogue').innerHTML = `
-            <p>You are visiting a traditional Japanese tea ceremony. The host greets you warmly.</p>
-            <p>Host: "Welcome! Please take a seat. Would you like to try some matcha tea?"</p>
-            <p>You: "Yes, I would love to. How is the tea prepared?"</p>
-            <p>Host: "The tea is whisked with hot water to create a frothy, rich flavor. It's a calm and meditative process."</p>
-            <p>Host: "In Japan, tea ceremonies are not just about drinking tea but about appreciating the beauty and tranquility of the moment."</p>
-        `;
-        document.getElementById('culturalQuiz').innerHTML = `
-            <p>What is the traditional Japanese tea ceremony called?</p>
-            <label><input type="radio" name="culturalQuestion" value="A"> Ikebana</label><br>
-            <label><input type="radio" name="culturalQuestion" value="B"> Sado</label><br>
-            <label><input type="radio" name="culturalQuestion" value="C"> Origami</label><br>
-            <button onclick="checkCulturalQuiz()">Submit Answer</button>
-        `;
-    }
-
-    function checkCulturalQuiz() {
-        const selectedOption = document.querySelector('input[name="culturalQuestion"]:checked');
-        if (selectedOption && selectedOption.value === 'B') {
-            alert('Correct! "Sado" is the traditional Japanese tea ceremony.');
-        } else {
-            alert('Incorrect. Try again!');
-        }
-    }
-
-    // Multiplayer Duels
-    const socket = io('your-multiplayer-server-url');
-    socket.on('connect', () => {
-        console.log('Connected to server');
+    // Initialize charts
+    let barChart = new Chart(ctxBar, {
+        type: 'bar',
+        data: { datasets: [{ label: 'Average Grades', data: [], backgroundColor: [] }] },
+        options: { scales: { y: { beginAtZero: true } } }
     });
 
-    socket.on('leaderboardUpdate', (data) => {
-        updateLeaderboard(data);
+    let pieChart = new Chart(ctxPie, {
+        type: 'pie',
+        data: { labels: grades, datasets: [{ data: grades.map(() => 0), backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'] }] }
     });
 
-    function startDuel() {
-        socket.emit('challenge', { type: 'friend' });
-        alert('Challenge sent to your friend!');
+    let lineChart = new Chart(ctxLine, {
+        type: 'line',
+        data: { labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+               datasets: [{ label: 'Average Grade', data: [], borderColor: 'rgb(75, 192, 192)', tension: 0.1 }] }
+    });
+
+    // Functions to update charts
+    function updateBarChart() {
+        const subject = document.getElementById('barFilter').value;
+        const filteredData = subject === 'all' ? students : students.filter(s => s.subject === subject);
+        const gradeCounts = grades.map(grade => filteredData.filter(s => s.grade === grade).length);
+        barChart.data.labels = grades;
+        barChart.data.datasets[0].data = gradeCounts;
+        barChart.data.datasets[0].backgroundColor = grades.map((_, i) => `rgba(${i*50}, ${100+(i*20)}, ${200-(i*20)}, 0.6)`);
+        barChart.update();
     }
 
-    function findOpponent() {
-        socket.emit('findOpponent');
-        alert('Searching for an opponent...');
+    function updatePieChart() {
+        const gradeDistribution = grades.map(grade => students.filter(s => s.grade === grade).length);
+        pieChart.data.datasets[0].data = gradeDistribution;
+        pieChart.update();
     }
 
-    function updateLeaderboard(data) {
-        const leaderboardList = document.getElementById('leaderboardList');
-        leaderboardList.innerHTML = '';
-        data.forEach(entry => {
-            const li = document.createElement('li');
-            li.textContent = `${entry.name}: ${entry.score}`;
-            leaderboardList.appendChild(li);
+    function updateLineChart() {
+        const year = document.getElementById('lineFilter').value;
+        const averageGrades = Array(12).fill().map(() => {
+            const monthStudents = students.filter(s => s.year === year && Math.random() > 0.3); // Randomize data a bit
+            return monthStudents.reduce((sum, s) => sum + (grades.indexOf(s.grade) + 1), 0) / monthStudents.length || 0;
         });
+        lineChart.data.datasets[0].data = averageGrades;
+        lineChart.update();
     }
+
+    function updateTopStudents() {
+        const topStudents = [...students].sort((a, b) => grades.indexOf(b.grade) - grades.indexOf(a.grade)).slice(0, 10);
+        document.getElementById('topStudents').innerHTML = topStudents.map((s, i) => `<tr><td class="px-4 py-2 border">${i+1}</td><td class="px-4 py-2 border">${s.name}</td><td class="px-4 py-2 border">${s.subject}</td><td class="px-4 py-2 border">${s.grade}</td></tr>`).join('');
+    }
+
+    // Initial updates
+    updateBarChart();
+    updatePieChart();
+    updateLineChart();
+    updateTopStudents();
 </script>
+
 </body>
 </html>
