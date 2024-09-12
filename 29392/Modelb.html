@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Release Calendar</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.css" />
+    <style>
+        body { font-family: 'Arial', sans-serif; background: #1a1a1a; color: #fff; margin: 0; padding: 0; }
+        .calendar-container { display: flex; }
+        .calendar { background: #2a2a2a; padding: 20px; width: 70%; }
+        .game-preview { position: fixed; right: 0; top: 0; width: 300px; height: 100vh; background: #333; color: #fff; padding: 20px; overflow-y: auto; display: none; }
+        .game-preview img { width: 100%; height: auto; }
+        .filters, .wishlist, .sort-options, .search-bar, .notification-settings { background: #333; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
+        .filters select, .sort-options select, .search-bar input { background: #444; color: #fff; border: none; padding: 5px; border-radius: 3px; width: 100%; }
+        .wishlist { max-height: 400px; overflow-y: auto; }
+        .wishlist ul { list-style-type: none; padding: 0; }
+        .wishlist li { padding: 5px; border-bottom: 1px solid #444; display: flex; justify-content: space-between; align-items: center; }
+        .wishlist-btn, .remove-from-wishlist, .set-reminder-btn, .notification-btn, #submitWishlist { background: #007BFF; border: none; color: white; padding: 5px 10px; cursor: pointer; border-radius: 3px; }
+        .wishlist-btn:hover, .remove-from-wishlist:hover, .set-reminder-btn:hover, .notification-btn:hover, #submitWishlist:hover { background: #0056b3; }
+        .remove-from-wishlist { background: #dc3545; }
+        .notification-settings input { margin-right: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="calendar-container">
+    <div class="calendar" id="gameCalendar"></div>
+
+    <div class="game-preview" id="gamePreview">
+        <h3 id="gameTitle"></h3>
+        <div id="gameTrailer"></div>
+        <p id="gameDescription"></p>
+        <img id="gameScreenshot" src="" alt="Game Screenshot" />
+        <button class="wishlist-btn" id="addToWishlistBtn">Add to Wishlist</button>
+        <button class="set-reminder-btn" id="setReminderBtn" style="display:none;">Set Reminder</button>
+    </div>
+</div>
+
+<div class="search-bar">
+    <input type="text" id="searchInput" placeholder="Search games..." />
+</div>
+
+<div class="filters">
+    <h2>Filters</h2>
+    <select id="genreFilter">
+        <option value="">All Genres</option>
+        <!-- Options will be populated dynamically -->
+    </select>
+    <select id="platformFilter">
+        <option value="">All Platforms</option>
+        <!-- Options will be populated dynamically -->
+    </select>
+</div>
+
+<div class="sort-options">
+    <h2>Sort By</h2>
+    <select id="sortOptions">
+        <option value="date">Release Date</option>
+        <option value="title">Title</option>
+    </select>
+</div>
+
+<div class="notification-settings">
+    <h2>Notification Settings</h2>
+    <input type="checkbox" id="notifyOnAdd" checked />
+    <label for="notifyOnAdd">Notify on adding to wishlist</label><br>
+    <input type="checkbox" id="notifyOnRelease" checked />
+    <label for="notifyOnRelease">Notify on release day</label>
+</div>
+
+<div class="wishlist">
+    <h2>My Wishlist</h2>
+    <ul id="wishlistGames"></ul>
+    <button id="submitWishlist">Submit Wishlist</button>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Mock data for demonstration
+    let games = [
+        {title: 'Cyberpunk 2077', date: '2023-12-10', genre: 'RPG', platform: 'PC', trailer: 'https://www.youtube.com/embed/8Xb6b4iD7hU', description: 'An open-world action adventure story set in Night City.', screenshot: 'https://via.placeholder.com/300x200?text=Cyberpunk+2077'},
+        {title: 'Elden Ring', date: '2024-02-25', genre: 'Action RPG', platform: 'PC', trailer: 'https://www.youtube.com/embed/PsD0NpP6p0M', description: 'A dark fantasy action RPG set in a vast open world.', screenshot: 'https://via.placeholder.com/300x200?text=Elden+Ring'}
+        // More games...
+    ];
+
+    function populateFilters() {
+        const genres = [...new Set(games.map(g => g.genre))];
+        const platforms = [...new Set(games.map(g => g.platform))];
+
+        genres.forEach(genre => $('#genreFilter').append(`<option value="${genre}">${genre}</option>`));
+        platforms.forEach(platform => $('#platformFilter').append(`<option value="${platform}">${platform}</option>`));
+    }
+
+    function updateCalendar() {
+        $('#gameCalendar').fullCalendar('removeEvents');
+        $('#gameCalendar').fullCalendar('addEventSource', games.filter(g => 
+            ($('#genreFilter').val() === '' || g.genre === $('#genreFilter').val()) &&
+            ($('#platformFilter').val() === '' || g.platform === $('#platformFilter').val()) &&
+            ($('#searchInput').val() === '' || g.title.toLowerCase().includes($('#searchInput').val().toLowerCase()))
+        ).map(g => ({
+            title: g.title,
+            start: g.date,
+            allDay: true,
+            color: moment(g.date).diff(moment(), 'days') < 7 ? 'red' : moment(g.date).diff(moment(), 'months') < 1 ? 'yellow' : ''
+        })));
+    }
+
+    $('#gameCalendar').fullCalendar({
+        header: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'month,agendaWeek,agendaDay'
+        },
+        editable: false,
+        events: games.map(g => ({
+            title: g.title,
+            start: g.date,
+            allDay: true,
+            color: moment(g.date).diff(moment(), 'days') < 7 ? 'red' : moment(g.date).diff(moment(), 'months') < 1 ? 'yellow' : ''
+        })),
+        eventClick: function(calEvent) {
+            const game = games.find(g => g.title === calEvent.title);
+            $('#gameTitle').text(game.title);
+            $('#gameTrailer').html(`<iframe width="280" height="157" src="${game.trailer}" frameborder="0" allowfullscreen></iframe>`);
+            $('#gameDescription').text(game.description);
+            $('#gameScreenshot').attr('src', game.screenshot);
+            $('#addToWishlistBtn').data('game', game.title);
+            $('#setReminderBtn').data('game', game.title).show();
+            $('#gamePreview').show();
+        }
+    });
+
+    // Filters functionality
+    $('#genreFilter, #platformFilter').on('change', function() {
+        updateCalendar();
+    });
+
+    // Search functionality
+    $('#searchInput').on('input', function() {
+        updateCalendar();
+    });
+
+    // Sorting functionality
+    $('#sortOptions').on('change', function() {
+        const sortBy = $(this).val();
+        games.sort((a, b) => {
+            if (sortBy === 'date') {
+                return new Date(a.date) - new Date(b.date);
+            } else if (sortBy === 'title') {
+                return a.title.localeCompare(b.title);
+            }
+        });
+        updateCalendar();
+    });
+
+    // Wishlist functionality
+    $('#addToWishlistBtn').on('click', function() {
+        let gameTitle = $(this).data('game');
+        if (!$('#wishlistGames li:contains(' + gameTitle + ')').length) {
+            $('#wishlistGames').append(`<li>${gameTitle} <button class="remove-from-wishlist">Remove</button> <button class="set-reminder-btn" data-game="${gameTitle}">Set Reminder</button></li>`);
+            if ($('#notifyOnAdd').is(':checked')) {
+                if (Notification.permission === 'granted') {
+                    new Notification('Game added to wishlist!', {body: gameTitle});
+                }
+            }
+        }
+    });
+
+    $(document).on('click', '.remove-from-wishlist', function() {
+        $(this).parent().remove();
+    });
+
+    $(document).on('click', '.set-reminder-btn', function() {
+        let gameTitle = $(this).data('game');
+        let game = games.find(g => g.title === gameTitle);
+        let releaseDate = new Date(game.date);
+        let notifyDate = new Date(releaseDate.getTime() - 24 * 60 * 60 * 1000); // 24 hours before release
+        if ($('#notifyOnRelease').is(':checked')) {
+            setTimeout(() => {
+                if (Notification.permission === 'granted') {
+                    new Notification('Reminder: ' + gameTitle + ' is releasing tomorrow!', {body: 'Release Date: ' + game.date});
+                }
+            }, notifyDate - new Date());
+        }
+    });
+
+    $('#submitWishlist').on('click', function() {
+        let wishlistItems = $('#wishlistGames li').map(function() {
+            return $(this).text().replace('Remove', '').replace('Set Reminder', '').trim();
+        }).get();
+
+        if (wishlistItems.length) {
+            alert('Your wishlist has been submitted:\n' + wishlistItems.join('\n'));
+        } else {
+            alert('Your wishlist is empty.');
+        }
+    });
+
+    // Request notification permission
+    if (Notification.permission !== "granted") {
+        Notification.requestPermission();
+    }
+
+    populateFilters();
+    updateCalendar();
+});
+</script>
+
+</body>
+</html>
