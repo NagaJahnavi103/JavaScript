@@ -1,144 +1,134 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Chrome Dinosaur Game</title>
-    <style>
-        canvas { 
-            border: 1px solid #000; 
-            display: block; 
-            margin: 0 auto; 
-        }
-        #startScreen, #gameOverScreen {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            background: white;
-            padding: 20px;
-            border: 2px solid black;
-        }
-        button {
-            margin-top: 10px;
-            padding: 10px 20px;
-            cursor: pointer;
-        }
-    </style>
+<meta charset="UTF-8">
+<title>Chrome Dinosaur Game</title>
+<style>
+    body { font-family: Arial, sans-serif; text-align: center; background: #f0f0f0; }
+    #gameCanvas { border: 1px solid black; background: #fafafa; }
+    .screen { display: none; position: absolute; width: 800px; padding: 20px; }
+    #startScreen, #gameOverScreen { display: block; background: white; }
+    button { margin-top: 20px; padding: 10px; font-size: 16px; cursor: pointer; }
+</style>
 </head>
 <body>
-    <canvas id="gameCanvas" width="800" height="200"></canvas>
-    <div id="startScreen">
-        <h1>Welcome to Dino Run!</h1>
-        <p>Press SPACE to jump over obstacles.</p>
-        <button onclick="startGame()">Start Game</button>
-    </div>
-    <div id="gameOverScreen" style="display:none;">
-        <h1>Game Over</h1>
-        <p>Your Score: <span id="finalScore"></span></p>
-        <button onclick="restartGame()">Try Again</button>
-    </div>
+<div id="startScreen" class="screen">
+    <h1>Welcome to Dino Run!</h1>
+    <p>Press SPACE to jump over obstacles.</p>
+    <button onclick="startGame()">Start Game</button>
+</div>
+<canvas id="gameCanvas" width="800" height="200"></canvas>
+<div id="gameOverScreen" class="screen">
+    <h2>Game Over</h2>
+    <p>Your Score: <span id="finalScore"></span></p>
+    <button onclick="startGame()">Try Again</button>
+</div>
+<script>
+// Game logic here
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const dino = {x: 50, y: 150, width: 40, height: 50, dy: 0, jumpSpeed: -10, gravity: 0.6};
+let obstacles = [];
+let score = 0;
+let gameSpeed = 2;
+let gameOver = false;
+let gameStarted = false;
 
-    <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    let gameLoop;
-    let dino = {x: 50, y: 150, width: 40, height: 50, dy: 0, jumpStrength: -10, gravity: 0.6};
-    let obstacles = [];
-    let score = 0;
-    let obstacleSpeed = 3;
-    let timeSinceLastObstacle = 0;
-    let gameSpeedIncreaseInterval = 3000; // Increase speed every 3 seconds
+function startGame() {
+    document.getElementById('startScreen').style.display = 'none';
+    document.getElementById('gameOverScreen').style.display = 'none';
+    gameOver = false;
+    gameStarted = true;
+    score = 0;
+    gameSpeed = 2;
+    obstacles = [];
+    window.requestAnimationFrame(gameLoop);
+}
 
-    function startGame() {
-        document.getElementById('startScreen').style.display = 'none';
-        gameLoop = setInterval(updateGame, 20);
-        increaseSpeed = setInterval(() => obstacleSpeed += 0.3, gameSpeedIncreaseInterval);
+function createObstacle() {
+    const size = Math.random() * 70 + 20;
+    obstacles.push({
+        x: canvas.width,
+        y: canvas.height - size,
+        width: 20,
+        height: size
+    });
+}
+
+function gameLoop() {
+    if (gameOver) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Dinosaur jump logic
+    if (keys['Space'] && dino.y == 150) {
+        dino.dy = dino.jumpSpeed;
     }
-
-    function restartGame() {
-        // Reset game state
-        score = 0;
+    dino.dy += dino.gravity;
+    dino.y += dino.dy;
+    if (dino.y > 150) {
         dino.y = 150;
-        obstacles = [];
-        obstacleSpeed = 3;
-        document.getElementById('gameOverScreen').style.display = 'none';
-        startGame();
+        dino.dy = 0;
     }
 
-    function updateGame() {
-        // Clear canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Draw dino
+    ctx.fillStyle = 'green';
+    ctx.fillRect(dino.x, dino.y, dino.width, dino.height);
 
-        // Update dino position
-        if (dino.jumping) {
-            dino.y += dino.dy;
-            dino.dy += dino.gravity;
-            if (dino.y > 150) {
-                dino.y = 150;
-                dino.jumping = false;
-            }
+    // Obstacles
+    for (let obstacle of obstacles) {
+        obstacle.x -= gameSpeed;
+        ctx.fillStyle = 'red';
+        ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+    }
+
+    // Remove off-screen obstacles and detect collision
+    obstacles = obstacles.filter(ob => {
+        if (ob.x + ob.width < 0) return false;
+        if (dino.x < ob.x + ob.width && 
+            dino.x + dino.width > ob.x && 
+            dino.y < ob.y + ob.height && 
+            dino.y + dino.height > ob.y) {
+            gameOver = true;
+            document.getElementById('gameOverScreen').style.display = 'block';
+            document.getElementById('finalScore').innerText = score;
         }
-
-        // Spawn obstacles
-        timeSinceLastObstacle += 20;
-        if (timeSinceLastObstacle > 1000 / obstacleSpeed) {
-            obstacles.push({x: canvas.width, y: 150, width: 20, height: 50});
-            timeSinceLastObstacle = 0;
-        }
-
-        // Move and draw obstacles
-        obstacles.forEach((obstacle, index) => {
-            obstacle.x -= obstacleSpeed;
-            ctx.fillStyle = "red";
-            ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-
-            // Check collision
-            if (dino.x < obstacle.x + obstacle.width && 
-                dino.x + dino.width > obstacle.x && 
-                dino.y < obstacle.y + obstacle.height && 
-                dino.y + dino.height > obstacle.y) {
-                gameOver();
-            }
-
-            // Remove obstacle if off-screen
-            if (obstacle.x + obstacle.width < 0) {
-                obstacles.splice(index, 1);
-                score++;
-            }
-        });
-
-        // Draw dino
-        ctx.fillStyle = "green";
-        ctx.fillRect(dino.x, dino.y, dino.width, dino.height);
-
-        // Draw score
-        ctx.fillStyle = "black";
-        ctx.font = "20px Arial";
-        ctx.fillText("Score: " + score, 10, 25);
-
-        // Increase difficulty over time
-        // (This is handled by the interval set in startGame)
-    }
-
-    function jump() {
-        if (!dino.jumping) {
-            dino.jumping = true;
-            dino.dy = dino.jumpStrength;
-        }
-    }
-
-    function gameOver() {
-        clearInterval(gameLoop);
-        clearInterval(increaseSpeed);
-        document.getElementById('finalScore').textContent = score;
-        document.getElementById('gameOverScreen').style.display = 'block';
-    }
-
-    window.addEventListener('keydown', function(e) {
-        if (e.code === 'Space') jump();
+        return true;
     });
 
-    </script>
+    // Score
+    ctx.fillStyle = 'black';
+    ctx.font = '20px Arial';
+    ctx.fillText(`Score: ${score}`, 10, 30);
+
+    // Increase difficulty
+    if (score % 10 === 0 && score > 0) {
+        gameSpeed += 0.3;
+    }
+
+    if (Math.random() < 0.01 && obstacles[obstacles.length - 1].x < canvas.width - 300) {
+        createObstacle();
+    }
+
+    score++;
+    if (!gameOver) requestAnimationFrame(gameLoop);
+}
+
+// Key handling
+let keys = {};
+document.addEventListener('keydown', function(e) {
+    keys[e.code] = true;
+});
+document.addEventListener('keyup', function(e) {
+    keys[e.code] = false;
+});
+
+// Start game loop
+setInterval(() => {
+    if (gameStarted && !gameOver) {
+        gameLoop();
+    }
+}, 1000/60);
+</script>
 </body>
 </html>

@@ -4,93 +4,61 @@
 <meta charset="UTF-8">
 <title>Chrome Dinosaur Game</title>
 <style>
-body { 
-    font-family: Arial, sans-serif; 
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-    background: #f0f0f0;
-}
-canvas { 
-    border: 1px solid #000; 
-    background: #fff;
-}
-#gameContainer {
-    text-align: center;
-}
-#startScreen, #gameOverScreen {
-    position: absolute;
-    width: 800px;
-    background: rgba(255, 255, 255, 0.9);
+body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
+canvas { background: #f0f0f0; display: block; margin: 0 auto; }
+#startScreen, #gameOverScreen { 
+    position: absolute; 
+    top: 50%; 
+    left: 50%; 
+    transform: translate(-50%, -50%);
+    text-align: center; 
+    background: white;
     padding: 20px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    border: 2px solid black;
 }
-button {
-    padding: 10px 20px;
-    font-size: 1em;
-    cursor: pointer;
+button { 
+    padding: 10px 20px; 
+    font-size: 1em; 
+    cursor: pointer; 
 }
 </style>
 </head>
 <body>
-<div id="gameContainer">
-    <canvas id="gameCanvas" width="800" height="200"></canvas>
-    <div id="startScreen">
-        <h1>Chrome Dinosaur Game</h1>
-        <p>Press SPACE to jump. Avoid the obstacles!</p>
-        <button onclick="startGame()">Start Game</button>
-    </div>
-    <div id="gameOverScreen" style="display: none;">
-        <h2>Game Over</h2>
-        <p>Your Score: <span id="finalScore"></span></p>
-        <button onclick="restartGame()">Try Again</button>
-    </div>
-    <div id="score">Score: <span id="scoreValue">0</span></div>
+<div id="startScreen">
+    <h1>Chrome Dinosaur Game</h1>
+    <p>Press Space to Jump. Avoid the obstacles!</p>
+    <button onclick="startGame()">Start Game</button>
 </div>
+<div id="gameOverScreen" style="display:none;">
+    <h1>Game Over</h1>
+    <p>Your Score: <span id="finalScore"></span></p>
+    <button onclick="restartGame()">Try Again</button>
+</div>
+<canvas id="gameCanvas" width="800" height="200"></canvas>
 
 <script>
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const startScreen = document.getElementById('startScreen');
 const gameOverScreen = document.getElementById('gameOverScreen');
-const scoreDisplay = document.getElementById('scoreValue');
-const finalScoreDisplay = document.getElementById('finalScore');
+const finalScore = document.getElementById('finalScore');
 
-const dino = {x: 50, y: 150, width: 50, height: 50, dy: 0, jumpStrength: -10, gravity: 0.6};
+let gameLoop;
+let dinosaur = {x: 50, y: 150, width: 50, height: 50, vy: 0, jumpStrength: -10, gravity: 0.5};
 let obstacles = [];
 let score = 0;
 let gameSpeed = 2;
-let gameRunning = false;
-let increaseSpeedInterval;
-
-class Obstacle {
-    constructor() {
-        this.width = 30;
-        this.height = Math.random() * 50 + 20;
-        this.x = canvas.width;
-        this.y = canvas.height - this.height;
-    }
-
-    update() {
-        this.x -= gameSpeed;
-    }
-
-    draw() {
-        ctx.fillStyle = 'red';
-        ctx.fillRect(this.x, this.y, this.width, this.height);
-    }
-}
+let gameState = 'start';
 
 function startGame() {
     startScreen.style.display = 'none';
-    gameRunning = true;
+    gameState = 'playing';
+    obstacles = [];
     score = 0;
     gameSpeed = 2;
-    obstacles = [];
-    increaseSpeedInterval = setInterval(() => gameSpeed += 0.3, 3000);
-    window.requestAnimationFrame(gameLoop);
+    dinosaur.y = 150;
+    dinosaur.vy = 0;
+    gameLoop = setInterval(updateGame, 20);
 }
 
 function restartGame() {
@@ -98,66 +66,70 @@ function restartGame() {
     startGame();
 }
 
-function gameLoop() {
-    if (!gameRunning) return;
-
+function updateGame() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+    
     // Update dinosaur
-    dino.dy += dino.gravity;
-    dino.y += dino.dy;
-    if (dino.y > 150) {
-        dino.y = 150;
-        dino.dy = 0;
+    dinosaur.vy += dinosaur.gravity;
+    dinosaur.y += dinosaur.vy;
+    if (dinosaur.y > 150) {
+        dinosaur.y = 150;
+        dinosaur.vy = 0;
     }
-
-    // Draw dinosaur
     ctx.fillStyle = 'green';
-    ctx.fillRect(dino.x, dino.y, dino.width, dino.height);
+    ctx.fillRect(dinosaur.x, dinosaur.y, dinosaur.width, dinosaur.height);
 
-    // Obstacle management
+    // Create new obstacles
     if (Math.random() < 0.02) {
-        obstacles.push(new Obstacle());
+        obstacles.push({x: 800, y: 150, width: 30, height: 50});
     }
 
-    obstacles.forEach((obstacle, index, object) => {
-        obstacle.update();
-        obstacle.draw();
-
-        // Collision detection
-        if (dino.x < obstacle.x + obstacle.width &&
-            dino.x + dino.width > obstacle.x &&
-            dino.y < obstacle.y + obstacle.height &&
-            dino.y + dino.height > obstacle.y) {
+    // Update and draw obstacles
+    for (let i = 0; i < obstacles.length; i++) {
+        obstacles[i].x -= gameSpeed;
+        ctx.fillStyle = 'red';
+        ctx.fillRect(obstacles[i].x, obstacles[i].y, obstacles[i].width, obstacles[i].height);
+        
+        // Check collision
+        if (
+            dinosaur.x < obstacles[i].x + obstacles[i].width &&
+            dinosaur.x + dinosaur.width > obstacles[i].x &&
+            dinosaur.y < obstacles[i].y + obstacles[i].height &&
+            dinosaur.height + dinosaur.y > obstacles[i].y
+        ) {
             gameOver();
+            return;
         }
 
         // Remove obstacle if off-screen
-        if (obstacle.x + obstacle.width < 0) {
-            object.splice(index, 1);
+        if (obstacles[i].x + obstacles[i].width < 0) {
+            obstacles.splice(i, 1);
             score++;
-            scoreDisplay.textContent = score;
+            i--;
         }
-    });
+    }
 
-    window.requestAnimationFrame(gameLoop);
+    // Increase speed over time
+    if (Date.now() % 3000 < 20) gameSpeed += 0.3;
+
+    // Draw score
+    ctx.fillStyle = 'black';
+    ctx.font = '20px Arial';
+    ctx.fillText(`Score: ${score}`, 10, 30);
 }
 
 function gameOver() {
-    gameRunning = false;
-    clearInterval(increaseSpeedInterval);
-    finalScoreDisplay.textContent = score;
+    clearInterval(gameLoop);
+    gameState = 'over';
+    finalScore.textContent = score;
     gameOverScreen.style.display = 'block';
 }
 
-document.addEventListener('keydown', function(event) {
-    if (event.code === 'Space' && dino.y >= 150) {
-        dino.dy = dino.jumpStrength;
+document.addEventListener('keydown', function(e) {
+    if (e.code === 'Space' && gameState === 'playing' && dinosaur.y === 150) {
+        dinosaur.vy = dinosaur.jumpStrength;
     }
 });
-
-// Initially hide the game over screen
-gameOverScreen.style.display = 'none';
 </script>
 </body>
 </html>
