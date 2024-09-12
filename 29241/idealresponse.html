@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zero Waste Kitchen</title>
+    <title>Zero Waste Kitchen: Culinary Challenge</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css">
     <style>
         body { font-family: 'Arial', sans-serif; }
         .kitchen-area, .dashboard, .composing-guide { padding: 20px; }
@@ -64,12 +65,48 @@
         .recipe-details h3 { margin-bottom: 10px; }
         .recipe-details ul { list-style-type: none; padding: 0; }
         .recipe-details ul li { margin-bottom: 5px; }
+        #compostGuide { 
+            background-color: #f9f9f9; 
+            padding: 20px; 
+            border-radius: 5px; 
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        #compostGuide img { 
+            max-width: 100%; 
+            height: auto; 
+            border-radius: 5px; 
+            margin-bottom: 10px;
+        }
+        #compostGuide h3 { 
+            margin-top: 20px; 
+            font-size: 1.5rem;
+        }
+        .notification {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+        .notification.success {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .notification.error {
+            background-color: #f44336;
+            color: white;
+        }
+        #profileSection, #analyticsSection {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
     <section class="section">
         <div class="container">
-            <h1 class="title">Zero Waste Kitchen</h1>
+            <h1 class="title">Zero Waste Kitchen: Culinary Challenge</h1>
             <div class="columns">
                 <div class="column is-one-third kitchen-area">
                     <h2 class="subtitle">Pantry</h2>
@@ -90,20 +127,56 @@
                 <div class="column dashboard">
                     <h2 class="subtitle">Dashboard</h2>
                     <canvas id="wasteChart"></canvas>
+                    <canvas id="trendChart"></canvas>
                     <div id="achievementBadges"></div>
                 </div>
             </div>
             <div class="columns">
                 <div class="column composing-guide">
                     <h2 class="subtitle">Compost Guide</h2>
-                    <div id="compostGuide"></div>
+                    <div id="compostGuide">
+                        <img src="https://example.com/composting-basics.jpg" alt="Composting Basics">
+                        <h3>What Can You Compost?</h3>
+                        <p>Composting is a natural process that transforms organic waste into valuable fertilizer for your garden. Here are some items you can compost:</p>
+                        <ul>
+                            <li>Fruit and vegetable scraps</li>
+                            <li>Coffee grounds and filters</li>
+                            <li>Eggshells</li>
+                            <li>Grass clippings and leaves</li>
+                            <li>Small amounts of paper and cardboard</li>
+                        </ul>
+                        <img src="https://example.com/composting-process.jpg" alt="Composting Process">
+                        <h3>How to Start Composting</h3>
+                        <p>Follow these simple steps to start your composting journey:</p>
+                        <ol>
+                            <li>Choose a compost bin or area in your yard.</li>
+                            <li>Add a mix of green (nitrogen-rich) and brown (carbon-rich) materials.</li>
+                            <li>Keep the compost moist and turn it regularly to aerate.</li>
+                            <li>Harvest your compost after several months and use it in your garden.</li>
+                        </ol>
+                    </div>
                 </div>
+            </div>
+            <div id="profileSection">
+                <h2 class="subtitle">User Profile</h2>
+                <input type="text" id="profileName" placeholder="Enter your name">
+                <button id="saveProfile">Save Profile</button>
+                <h2 id="userName"></h2>
+            </div>
+            <div id="analyticsSection">
+                <h2 class="subtitle">Advanced Analytics</h2>
+                <p id="totalWaste"></p>
+                <p id="wastedIngredients"></p>
+                <canvas id="trendChart"></canvas>
             </div>
         </div>
     </section>
 
+    <div id="notification" class="notification"></div>
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <script>
     $(function() {
         // Sample data
@@ -111,7 +184,7 @@
             { name: 'Tomato', recipe: 'Tomato Soup' },
             { name: 'Bread', recipe: 'Egg Sandwich' },
             { name: 'Cheese', recipe: 'Cheese Omelette' },
-            { name: 'Egg', recipe: 'Cheese Omelette' }
+            { name: 'Egg', recipe: 'Egg Sandwich' } // Correctly associated with Egg Sandwich
         ];
         const recipes = ['Tomato Soup', 'Cheese Omelette', 'Egg Sandwich'];
         const achievements = ['Waste Warrior', 'Eco Chef', 'Sustainability Guru'];
@@ -138,192 +211,167 @@
                 ]
             },
             'Egg Sandwich': {
-                ingredients: ['Bread'],
+                ingredients: ['Bread', 'Egg'],
                 steps: [
                     '1. Toast the bread slices.',
                     '2. Boil the eggs and slice them.',
-                    '3. Assemble the sandwich with eggs between the bread slices.',
-                    '4. Season with salt and pepper.'
+                    '3. Assemble the sandwich with eggs and any other desired toppings.'
                 ]
             }
         };
 
-        const $pantry = $('#pantry');
-        const $recipeArea = $('#recipeArea');
-        const $recipeBookList = $('#recipeBookList');
-        const $achievementBadges = $('#achievementBadges');
-        const $recipeDetailContent = $('#recipeDetailContent');
+        function showNotification(message, type = 'success') {
+            const $notification = $('#notification');
+            $notification.removeClass('success error').addClass(type).text(message).fadeIn().delay(3000).fadeOut();
+        }
 
-        let addedIngredients = {};
-        let achievementsEarned = {
-            'Waste Warrior': false,
-            'Eco Chef': false,
-            'Sustainability Guru': false
-        };
+        function addPantryItem(item) {
+            $('#pantry').append(`<div class="pantry-item" data-id="${item.name}">${item.name}</div>`);
+        }
 
-        // Populate pantry with buttons
-        pantryItems.forEach(item => {
-            $pantry.append(`
-                <div class="pantry-item" draggable="true" data-recipe="${item.recipe}">
-                    <span>${item.name}</span>
-                    <button class="add-to-recipe">Add to Recipe</button>
-                </div>
-            `);
-        });
+        function addRecipe(recipe) {
+            $('#recipeBookList').append(`<li class="recipe-item" data-recipe="${recipe}">${recipe}<span class="recipe-label">New</span></li>`);
+        }
 
-        // Populate recipe book
-        recipes.forEach(recipe => {
-            $recipeBookList.append(`
-                <li data-recipe="${recipe}">${recipe}</li>
-            `);
-            addedIngredients[recipe] = [];
-        });
+        function displayRecipeDetails(recipe) {
+            const details = recipeDetails[recipe];
+            let steps = '';
+            if (details) {
+                details.steps.forEach(step => {
+                    steps += `<li>${step}</li>`;
+                });
+                $('#recipeDetailContent').html(`
+                    <h3>${recipe}</h3>
+                    <p>Ingredients: ${details.ingredients.join(', ')}</p>
+                    <h4>Steps:</h4>
+                    <ul>${steps}</ul>
+                `);
+            }
+        }
 
-        // Populate achievement badges
-        achievements.forEach(achievement => {
-            $achievementBadges.append(`<span class="badge" data-achievement="${achievement}">${achievement}</span>`);
-        });
+        function updateAnalytics() {
+            const wasteData = {
+                totalWaste: 20,
+                wastedIngredients: ['Tomato', 'Cheese'],
+                trends: [5, 4, 3]
+            };
 
-        // Add click functionality to buttons
-        $pantry.on('click', '.add-to-recipe', function() {
-            const $item = $(this).closest('.pantry-item');
-            const itemName = $item.find('span').text();
-            const recipeName = $item.data('recipe');
-            $recipeArea.append(`
-                <div class="recipe-item animated">
-                    <span>${itemName}</span>
-                    <span class="recipe-label">${recipeName}</span>
-                </div>
-            `);
-            addedIngredients[recipeName].push(itemName);
-            updateRecipeBook(recipeName);
-            updateRecipeDetails(recipeName);
-            checkAchievements();
-            // Track the added ingredient and update waste
-            updateWasteData();
-        });
+            $('#totalWaste').text(`Total Waste: ${wasteData.totalWaste} kg`);
+            $('#wastedIngredients').text(`Wasted Ingredients: ${wasteData.wastedIngredients.join(', ')}`);
 
-        function updateRecipeBook(recipeName) {
-            const requiredIngredients = recipeDetails[recipeName].ingredients || [];
-            const added = addedIngredients[recipeName] || [];
-            const progressDiv = $(`#progress-${recipeName}`);
-            
-            progressDiv.empty();
-            
-            requiredIngredients.forEach(ingredient => {
-                const status = added.includes(ingredient) ? '✓' : '✗';
-                progressDiv.append(`<span>${ingredient}: ${status}</span>`);
+            const trendCtx = document.getElementById('trendChart').getContext('2d');
+            new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Week 1', 'Week 2', 'Week 3'],
+                    datasets: [{
+                        label: 'Waste Trend',
+                        data: wasteData.trends,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)'
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
             });
         }
 
-        function updateRecipeDetails(recipeName) {
-            const recipe = recipeDetails[recipeName];
-            if (!recipe) return;
+        function enableSorting() {
+            function updateOrder(selector) {
+                const items = $(selector).sortable('toArray', { attribute: 'data-id' });
+                console.log(`New order for ${selector}:`, items);
+                // Here you would typically save the new order to a backend or local storage
+            }
 
-            let detailsHtml = `<h3>${recipeName}</h3>`;
-            detailsHtml += '<h4>Ingredients:</h4>';
-            detailsHtml += '<ul>';
-            recipe.ingredients.forEach(ingredient => {
-                detailsHtml += `<li>${ingredient}</li>`;
+            $('#pantry').sortable({
+                placeholder: "ui-state-highlight",
+                cursor: "move",
+                update: function(event, ui) {
+                    updateOrder('#pantry');
+                }
             });
-            detailsHtml += '</ul>';
-            detailsHtml += '<h4>Steps:</h4>';
-            detailsHtml += '<ul>';
-            recipe.steps.forEach(step => {
-                detailsHtml += `<li>${step}</li>`;
-            });
-            detailsHtml += '</ul>';
 
-            $recipeDetailContent.html(detailsHtml);
+            $('#recipeArea').sortable({
+                placeholder: "ui-state-highlight",
+                cursor: "move",
+                update: function(event, ui) {
+                    updateOrder('#recipeArea');
+                    suggestRecipe();
+                }
+            });
         }
 
-        // Add click functionality to recipe book items
-        $recipeBookList.on('click', 'li', function() {
-            const recipeName = $(this).data('recipe');
-            updateRecipeDetails(recipeName);
-        });
+        function saveProgress() {
+            const data = {
+                pantryItems: $('#pantry').children().map((i, el) => $(el).data()).get(),
+                recipes: $('#recipeBookList').children().map((i, el) => $(el).data('recipe')).get()
+            };
+            localStorage.setItem('userProgress', JSON.stringify(data));
+            showNotification('Progress saved successfully!');
+        }
 
-        // Add click functionality to achievement badges
-        $achievementBadges.on('click', '.badge', function() {
-            const achievement = $(this).data('achievement');
-            if (achievementsEarned[achievement]) {
-                alert(`You have already earned the ${achievement} badge!`);
+        function loadProgress() {
+            const data = JSON.parse(localStorage.getItem('userProgress'));
+            if (data) {
+                data.pantryItems.forEach(item => {
+                    $('#pantry').append(`<div class="pantry-item" data-id="${item.id}">${item.name}</div>`);
+                });
+
+                data.recipes.forEach(recipe => {
+                    $('#recipeBookList').append(`<li data-recipe="${recipe}" class="recipe-item">${recipe}<span class="recipe-label">New</span></li>`);
+                });
+                showNotification('Progress loaded successfully!');
+            }
+        }
+
+        function suggestRecipe() {
+            const availableIngredients = $('#recipeArea').children().map((i, el) => $(el).find('span').text()).get();
+            const suggestions = Object.keys(recipeDetails).filter(recipe => {
+                return recipeDetails[recipe].ingredients.every(ingredient => availableIngredients.includes(ingredient));
+            });
+
+            if (suggestions.length > 0) {
+                showNotification(`You can make: ${suggestions.join(', ')}`);
             } else {
-                alert(`You are on your way to earning the ${achievement} badge! Keep up the good work!`);
-            }
-        });
-
-        // Drag and Drop functionality
-        $pantry.on('dragstart', '.pantry-item', function(e) {
-            e.originalEvent.dataTransfer.setData("text/plain", JSON.stringify({
-                name: $(this).find('span').text(),
-                recipe: $(this).data('recipe')
-            }));
-        });
-
-        $recipeArea.on('dragover', function(e) {
-            e.preventDefault();
-        });
-
-        $recipeArea.on('drop', function(e) {
-            e.preventDefault();
-            const data = JSON.parse(e.originalEvent.dataTransfer.getData("text"));
-            $(this).append(`
-                <div class="recipe-item animated">
-                    <span>${data.name}</span>
-                    <span class="recipe-label">${data.recipe}</span>
-                </div>
-            `);
-            addedIngredients[data.recipe].push(data.name);
-            updateRecipeBook(data.recipe);
-            updateRecipeDetails(data.recipe);
-            checkAchievements();
-            // Track the added ingredient and update waste
-            updateWasteData();
-        });
-
-        function checkAchievements() {
-            // Example logic to check and update achievements
-            if (Object.values(addedIngredients).every(ingredients => ingredients.length > 0)) {
-                achievementsEarned['Waste Warrior'] = true;
-                $(`[data-achievement='Waste Warrior']`).removeClass('inactive');
-            }
-
-            if (addedIngredients['Cheese Omelette'] && addedIngredients['Tomato Soup']) {
-                achievementsEarned['Eco Chef'] = true;
-                $(`[data-achievement='Eco Chef']`).removeClass('inactive');
-            }
-
-            if (Object.values(addedIngredients).flat().length >= 10) {
-                achievementsEarned['Sustainability Guru'] = true;
-                $(`[data-achievement='Sustainability Guru']`).removeClass('inactive');
+                showNotification('No recipes can be made with the current ingredients.');
             }
         }
 
-        // Chart for dashboard
-        const ctx = document.getElementById('wasteChart').getContext('2d');
-        const wasteChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Week 1', 'Week 2', 'Week 3'],
-                datasets: [{
-                    label: 'Food Waste (kg)',
-                    data: [5, 3, 2],
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: { scales: { y: { beginAtZero: true } } }
+        function saveUserProfile(profile) {
+            localStorage.setItem('userProfile', JSON.stringify(profile));
+        }
+
+        function loadUserProfile() {
+            const profile = JSON.parse(localStorage.getItem('userProfile'));
+            if (profile) {
+                $('#userName').text(profile.name);
+            }
+        }
+
+        // Initialize
+        pantryItems.forEach(item => addPantryItem(item));
+        recipes.forEach(recipe => addRecipe(recipe));
+        updateAnalytics();
+        enableSorting();
+        loadProgress();
+        loadUserProfile();
+
+        // Event handlers
+        $('#saveProfile').on('click', function() {
+            const name = $('#profileName').val();
+            saveUserProfile({ name });
+            showNotification('Profile saved successfully!');
         });
 
-        // Placeholder for compost guide animation
-        $('#compostGuide').html('<p>Here will be an animated guide on composting.</p>');
-
-        function updateWasteData() {
-            // Placeholder function to update waste data
-            console.log('Updating waste data...');
-        }
+        $('#recipeBookList').on('click', 'li', function() {
+            const recipe = $(this).data('recipe');
+            displayRecipeDetails(recipe);
+        });
     });
     </script>
 </body>

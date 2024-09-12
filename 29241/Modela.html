@@ -4,101 +4,91 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zero Waste Kitchen</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
     <style>
-        body { font-family: 'Arial', sans-serif; }
-        .kitchen-area, .dashboard { padding: 20px; }
-        .pantry-item, .recipe-item { 
-            cursor: grab; 
-            margin: 5px; 
-            padding: 10px; 
-            border: 1px solid #ddd; 
-            border-radius: 5px; 
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #f4f4e1;
+            color: #333;
         }
-        .drag-area { 
-            min-height: 200px; 
-            border: 2px dashed #ccc; 
-            border-radius: 10px; 
-            padding: 10px; 
+        .kitchen {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            padding: 20px;
         }
-        .animated { transition: all 0.3s; }
+        .section {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin: 10px;
+            padding: 20px;
+            width: 45%;
+            min-height: 200px;
+        }
+        #pantry, #cookingArea {
+            border: 2px dashed #d1e7dd;
+        }
+        .item {
+            background: #a3d9a5;
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: move;
+        }
+        #recipeBook, #compostGuide, #dashboard {
+            text-align: center;
+        }
+        .achievement {
+            color: #4CAF50;
+            display: none;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .fade-in {
+            animation: fadeIn 1s;
+        }
     </style>
 </head>
 <body>
-    <section class="section">
-        <div class="container">
-            <h1 class="title">Zero Waste Kitchen</h1>
-            <div class="columns">
-                <div class="column is-one-third kitchen-area">
-                    <h2 class="subtitle">Pantry</h2>
-                    <div id="pantry" class="drag-area"></div>
-                </div>
-                <div class="column is-one-third kitchen-area">
-                    <h2 class="subtitle">Create Recipe</h2>
-                    <div id="recipeArea" class="drag-area"></div>
-                </div>
-                <div class="column dashboard">
-                    <h2 class="subtitle">Dashboard</h2>
-                    <canvas id="wasteChart"></canvas>
-                </div>
-            </div>
-            <div class="columns">
-                <div class="column">
-                    <h2 class="subtitle">Compost Guide</h2>
-                    <div id="compostGuide"></div>
-                </div>
-            </div>
-        </div>
-    </section>
+    <div class="kitchen">
+        <div id="pantry" class="section">Pantry</div>
+        <div id="cookingArea" class="section">Cooking Area</div>
+        <div id="recipeBook" class="section">Recipe Book</div>
+        <div id="compostGuide" class="section">Compost Guide</div>
+        <div id="dashboard" class="section">Dashboard</div>
+    </div>
+    <div id="achievements" class="section">
+        <h3>Achievements</h3>
+        <div class="achievement">Zero Waste Hero!</div>
+    </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.2/dragula.min.js"></script>
     <script>
     $(function() {
-        // Sample data
-        const pantryItems = ['Tomato', 'Bread', 'Cheese', 'Egg'];
-        const $pantry = $('#pantry');
-        const $recipeArea = $('#recipeArea');
+        var drake = dragula([document.getElementById('pantry'), document.getElementById('cookingArea')]);
 
-        // Populate pantry
-        pantryItems.forEach(item => {
-            $pantry.append(`<div class="pantry-item" draggable="true">${item}</div>`);
+        drake.on('drop', function(el, target) {
+            if (target.id === 'cookingArea') {
+                // Logic for cooking or combining ingredients can go here
+                console.log('Ingredient added to cooking area:', el.textContent);
+            }
         });
 
-        // Drag and Drop functionality
-        $('.pantry-item').on('dragstart', function(e) {
-            e.originalEvent.dataTransfer.setData("text/plain", e.target.textContent);
-        });
+        // Mock function for checking achievements
+        function checkAchievements() {
+            $('.achievement').each(function() {
+                if(Math.random() > 0.5) { // Randomly unlock achievements
+                    $(this).addClass('fade-in').show();
+                }
+            });
+        }
 
-        $recipeArea.on('dragover', function(e) {
-            e.preventDefault();
-        });
-
-        $recipeArea.on('drop', function(e) {
-            e.preventDefault();
-            const data = e.originalEvent.dataTransfer.getData("text");
-            $(this).append(`<div class="recipe-item animated">${data}</div>`);
-        });
-
-        // Chart for dashboard
-        const ctx = document.getElementById('wasteChart').getContext('2d');
-        const wasteChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Week 1', 'Week 2', 'Week 3'],
-                datasets: [{
-                    label: 'Food Waste (kg)',
-                    data: [5, 3, 2],
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: { scales: { y: { beginAtZero: true } } }
-        });
-
-        // Placeholder for compost guide animation
-        $('#compostGuide').html('<p>Here will be an animated guide on composting.</p>');
+        // Simulate user actions
+        setTimeout(checkAchievements, 3000);
     });
     </script>
 </body>

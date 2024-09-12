@@ -3,154 +3,368 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Story Forge - Collaborative Epic Creation</title>
-    <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap" rel="stylesheet">
+    <title>Zero Waste Kitchen: Culinary Challenge</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
     <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f4f4f9;
-            color: #333;
-            margin: 0;
-            padding: 0;
-        }
-        .container {
-            width: 80%;
-            margin: auto;
+        body { font-family: 'Arial', sans-serif; }
+        .kitchen-area, .dashboard, .composing-guide { padding: 20px; }
+        .pantry-item, .recipe-item { 
+            cursor: grab; 
+            margin: 5px; 
+            padding: 10px; 
+            border: 1px solid #ddd; 
+            border-radius: 5px; 
             display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        header {
-            background: #4a4a4a;
-            color: white;
-            text-align: center;
-            padding: 1em 0;
-            font-family: 'MedievalSharp', cursive;
+        .pantry-item button { 
+            background-color: #4CAF50; 
+            color: white; 
+            border: none; 
+            padding: 5px 10px; 
+            border-radius: 5px; 
+            cursor: pointer; 
         }
-        #story-display {
-            flex: 3;
-            padding: 20px;
-            background: white;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            border-radius: 8px;
+        .drag-area { 
+            min-height: 200px; 
+            border: 2px dashed #ccc; 
+            border-radius: 10px; 
+            padding: 10px; 
         }
-        #user-controls {
-            flex: 1;
-            padding: 20px;
-            background: #e9e9e9;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        #plot-vote, #story-input, #real-time-feedback {
-            margin-bottom: 15px;
-        }
-        button {
-            background-color: #5cb85c;
-            border: none;
-            color: white;
-            padding: 10px 15px;
+        .badge { 
+            display: inline-block; 
+            padding: 5px 10px; 
+            margin: 5px; 
+            border-radius: 5px; 
+            background-color: #4CAF50; 
+            color: white; 
             cursor: pointer;
-            border-radius: 4px;
         }
-        button:hover {
-            background-color: #4cae4c;
+        .badge.inactive { background-color: #ddd; color: #aaa; cursor: not-allowed; }
+        .animated { transition: all 0.3s; }
+        .recipe-book, .inventory { margin-top: 20px; }
+        .recipe-item { position: relative; }
+        .recipe-item .recipe-label {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background-color: #FFD700;
+            color: #000;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 12px;
         }
-        textarea {
-            width: 100%;
-            height: 100px;
-            padding: 10px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
+        .recipe-progress { margin-top: 10px; }
+        .recipe-progress span { 
+            display: block; 
+            margin-bottom: 5px; 
         }
-        footer {
-            text-align: center;
-            padding: 10px 0;
-            background: #4a4a4a;
-            color: white;
+        .recipe-details { margin-top: 20px; }
+        .recipe-details h3 { margin-bottom: 10px; }
+        .recipe-details ul { list-style-type: none; padding: 0; }
+        .recipe-details ul li { margin-bottom: 5px; }
+        #compostGuide { 
+            background-color: #f9f9f9; 
+            padding: 20px; 
+            border-radius: 5px; 
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-        #feedback-list {
-            margin-top: 10px;
-            list-style: none;
-            padding: 0;
+        #compostGuide img { 
+            max-width: 100%; 
+            height: auto; 
+            border-radius: 5px; 
+            margin-bottom: 10px;
         }
-        #feedback-list li {
-            background: #fff;
-            margin-bottom: 5px;
-            padding: 10px;
-            border-radius: 4px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        #compostGuide h3 { 
+            margin-top: 20px; 
+            font-size: 1.5rem;
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Story Forge</h1>
-        <p>Collaborative Epic Creation</p>
-    </header>
-    <div class="container">
-        <section id="story-display">
-            <h2>The Tale Begins...</h2>
-            <p id="story-content">
-                In a land shrouded in mystery, where shadows danced under the pale moonlight, there lay an ancient forest. Deep within this forest, a hidden village thrived, untouched by the outside world. The villagers spoke of a legendary artifact, a gem with the power to control time itself. One fateful night, a young hero named Elara stumbled upon an ancient map that hinted at the artifact's location.
+    <section class="section">
+        <div class="container">
+            <h1 class="title">Zero Waste Kitchen: Culinary Challenge</h1>
+            <div class="columns">
+                <div class="column is-one-third kitchen-area">
+                    <h2 class="subtitle">Pantry</h2>
+                    <div id="pantry" class="drag-area inventory"></div>
+                </div>
+                <div class="column is-one-third kitchen-area">
+                    <h2 class="subtitle">Create Recipe</h2>
+                    <div id="recipeArea" class="drag-area"></div>
+                    <div class="recipe-book">
+                        <h3 class="subtitle">Recipe Book</h3>
+                        <ul id="recipeBookList"></ul>
+                    </div>
+                    <div class="recipe-details" id="recipeDetails">
+                        <h3 class="subtitle">Recipe Details</h3>
+                        <div id="recipeDetailContent"></div>
+                    </div>
+                </div>
+                <div class="column dashboard">
+                    <h2 class="subtitle">Dashboard</h2>
+                    <canvas id="wasteChart"></canvas>
+                    <div id="achievementBadges"></div>
+                </div>
+            </div>
+            <div class="columns">
+                <div class="column composing-guide">
+                    <h2 class="subtitle">Compost Guide</h2>
+                    <div id="compostGuide">
+                        <img src="https://example.com/composting-basics.jpg" alt="Composting Basics">
+                        <h3>What Can You Compost?</h3>
+                        <p>Composting is a natural process that transforms organic waste into valuable fertilizer for your garden. Here are some items you can compost:</p>
+                        <ul>
+                            <li>Fruit and vegetable scraps</li>
+                            <li>Coffee grounds and filters</li>
+                            <li>Eggshells</li>
+                            <li>Grass clippings and leaves</li>
+                            <li>Small amounts of paper and cardboard</li>
+                        </ul>
+                        <img src="https://example.com/composting-process.jpg" alt="Composting Process">
+                        <h3>How to Start Composting</h3>
+                        <p>Follow these simple steps to start your composting journey:</p>
+                        <ol>
+                            <li>Choose a compost bin or area in your yard.</li>
+                            <li>Add a mix of green (nitrogen-rich) and brown (carbon-rich) materials.</li>
+                            <li>Keep the compost moist and turn it regularly to aerate.</li>
+                            <li>Harvest your compost after several months and use it in your garden.</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-                Determined to uncover its secrets, Elara embarked on a perilous journey. Her path was fraught with challenges, from treacherous terrains to mythical creatures guarding the forest. With every step, she grew stronger and more resolute. Along the way, she encountered allies who shared her quest, each bringing their unique skills and wisdom.
-
-                As the days turned into weeks, Elara's courage and perseverance were tested. The forest seemed alive, its whispers guiding her toward the artifact. But the deeper she ventured, the more dangerous the journey became. Little did she know, a dark force was also in pursuit of the artifact, seeking to use its power for nefarious purposes. The stage was set for a grand confrontation that would determine the fate of both the artifact and the world.
-            </p>
-            <div id="real-time-feedback">
-                <h3>Reader Feedback:</h3>
-                <ul id="feedback-list">
-                    <!-- Existing feedback will be displayed here -->
-                </ul>
-                <h3>Submit Your Feedback:</h3>
-                <textarea id="feedback-input" placeholder="Share your thoughts..."></textarea>
-                <button onclick="submitFeedback()">Submit Feedback</button>
-            </div>
-        </section>
-        <aside id="user-controls">
-            <div id="plot-vote">
-                <h3>Vote on Next Plot Twist:</h3>
-                <button onclick="vote('Hero Finds a Magic Sword')">Hero Finds a Magic Sword</button>
-                <button onclick="vote('A New Villain Appears')">A New Villain Appears</button>
-            </div>
-            <div id="story-input">
-                <h3>Add to the Story:</h3>
-                <textarea id="user-story" placeholder="Your addition to the story..."></textarea>
-                <button onclick="addStory()">Submit</button>
-            </div>
-        </aside>
-    </div>
-    <footer>
-        © 2024 Story Forge. Let the tales unfold.
-    </footer>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        function vote(plotTwist) {
-            alert('You voted for: ' + plotTwist);
-            // Simulate sending vote to the server
-            // In a real application, use fetch or XMLHttpRequest to send vote data to the server
+    $(function() {
+        // Sample data
+        const pantryItems = [
+            { name: 'Tomato', recipe: 'Tomato Soup' },
+            { name: 'Bread', recipe: 'Egg Sandwich' },
+            { name: 'Cheese', recipe: 'Cheese Omelette' },
+            { name: 'Egg', recipe: 'Egg Sandwich' } // Correctly associated with Egg Sandwich
+        ];
+        const recipes = ['Tomato Soup', 'Cheese Omelette', 'Egg Sandwich'];
+        const achievements = ['Waste Warrior', 'Eco Chef', 'Sustainability Guru'];
+
+        const recipeDetails = {
+            'Tomato Soup': {
+                ingredients: ['Tomato'],
+                steps: [
+                    '1. Chop the tomatoes.',
+                    '2. Heat oil in a pot.',
+                    '3. Add tomatoes and cook for 10 minutes.',
+                    '4. Blend the mixture until smooth.',
+                    '5. Season with salt and pepper.'
+                ]
+            },
+            'Cheese Omelette': {
+                ingredients: ['Cheese', 'Egg'],
+                steps: [
+                    '1. Crack the eggs into a bowl and whisk.',
+                    '2. Heat oil in a pan.',
+                    '3. Pour in the eggs and cook until starting to set.',
+                    '4. Add cheese and fold the omelette.',
+                    '5. Cook for a few more minutes until cheese is melted.'
+                ]
+            },
+            'Egg Sandwich': {
+                ingredients: ['Bread', 'Egg'],
+                steps: [
+                    '1. Toast the bread slices.',
+                    '2. Boil the eggs and slice them.',
+                    '3. Assemble the sandwich with eggs between the bread slices.',
+                    '4. Season with salt and pepper.'
+                ]
+            }
+        };
+
+        const $pantry = $('#pantry');
+        const $recipeArea = $('#recipeArea');
+        const $recipeBookList = $('#recipeBookList');
+        const $achievementBadges = $('#achievementBadges');
+        const $recipeDetailContent = $('#recipeDetailContent');
+
+        let addedIngredients = {};
+        let achievementsEarned = {
+            'Waste Warrior': false,
+            'Eco Chef': false,
+            'Sustainability Guru': false
+        };
+
+        // Populate pantry with buttons
+        pantryItems.forEach(item => {
+            $pantry.append(`
+                <div class="pantry-item" draggable="true" data-recipe="${item.recipe}">
+                    <span>${item.name}</span>
+                    <button class="add-to-recipe">Add to Recipe</button>
+                </div>
+            `);
+        });
+
+        // Populate recipe book
+        recipes.forEach(recipe => {
+            $recipeBookList.append(`
+                <li data-recipe="${recipe}">${recipe}</li>
+            `);
+            addedIngredients[recipe] = [];
+        });
+
+        // Populate achievement badges
+        achievements.forEach(achievement => {
+            $achievementBadges.append(`<span class="badge" data-achievement="${achievement}">${achievement}</span>`);
+        });
+
+        // Add click functionality to buttons
+        $pantry.on('click', '.add-to-recipe', function() {
+            const $item = $(this).closest('.pantry-item');
+            const itemName = $item.find('span').text();
+            const recipeName = $item.data('recipe');
+            if (!addedIngredients[recipeName]) {
+                addedIngredients[recipeName] = [];
+            }
+            $recipeArea.append(`
+                <div class="recipe-item animated">
+                    <span>${itemName}</span>
+                    <span class="recipe-label">${recipeName}</span>
+                </div>
+            `);
+            addedIngredients[recipeName].push(itemName);
+            updateRecipeBook(recipeName);
+            updateRecipeDetails(recipeName);
+            checkAchievements();
+            // Track the added ingredient and update waste
+            updateWasteData();
+        });
+
+        function updateRecipeBook(recipeName) {
+            const requiredIngredients = recipeDetails[recipeName].ingredients || [];
+            const added = addedIngredients[recipeName] || [];
+            const progressDiv = $(`#progress-${recipeName}`);
+            
+            progressDiv.empty();
+            
+            requiredIngredients.forEach(ingredient => {
+                const status = added.includes(ingredient) ? '✓' : '✗';
+                progressDiv.append(`<span>${ingredient}: ${status}</span>`);
+            });
         }
 
-        function addStory() {
-            const storyAddition = document.getElementById('user-story').value;
-            if (storyAddition) {
-                const storyContent = document.getElementById('story-content');
-                storyContent.innerText += '\n\n' + storyAddition;
-                document.getElementById('user-story').value = '';
-                // Simulate sending story addition to the server
-                // In a real application, use fetch or XMLHttpRequest to send the story data
+        function updateRecipeDetails(recipeName) {
+            const recipe = recipeDetails[recipeName];
+            if (!recipe) return;
+
+            let detailsHtml = `<h3>${recipeName}</h3>`;
+            detailsHtml += '<h4>Ingredients:</h4>';
+            detailsHtml += '<ul>';
+            recipe.ingredients.forEach(ingredient => {
+                detailsHtml += `<li>${ingredient}</li>`;
+            });
+            detailsHtml += '</ul>';
+            detailsHtml += '<h4>Steps:</h4>';
+            detailsHtml += '<ul>';
+            recipe.steps.forEach(step => {
+                detailsHtml += `<li>${step}</li>`;
+            });
+            detailsHtml += '</ul>';
+
+            $recipeDetailContent.html(detailsHtml);
+        }
+
+        // Add click functionality to recipe book items
+        $recipeBookList.on('click', 'li', function() {
+            const recipeName = $(this).data('recipe');
+            updateRecipeDetails(recipeName);
+        });
+
+        // Add click functionality to achievement badges
+        $achievementBadges.on('click', '.badge', function() {
+            const achievement = $(this).data('achievement');
+            if (achievementsEarned[achievement]) {
+                alert(`You have already earned the ${achievement} badge!`);
+            } else {
+                alert(`You are on your way to earning the ${achievement} badge! Keep up the good work!`);
+            }
+        });
+
+        // Drag and Drop functionality
+        $pantry.on('dragstart', '.pantry-item', function(e) {
+            e.originalEvent.dataTransfer.setData("text/plain", JSON.stringify({
+                name: $(this).find('span').text(),
+                recipe: $(this).data('recipe')
+            }));
+        });
+
+        $recipeArea.on('dragover', function(e) {
+            e.preventDefault();
+        });
+
+        $recipeArea.on('drop', function(e) {
+            e.preventDefault();
+            const data = JSON.parse(e.originalEvent.dataTransfer.getData("text"));
+            if (!addedIngredients[data.recipe].includes(data.name)) {
+                $(this).append(`
+                    <div class="recipe-item animated">
+                        <span>${data.name}</span>
+                        <span class="recipe-label">${data.recipe}</span>
+                    </div>
+                `);
+                addedIngredients[data.recipe].push(data.name);
+                updateRecipeBook(data.recipe);
+                updateRecipeDetails(data.recipe);
+                checkAchievements();
+                // Track the added ingredient and update waste
+                updateWasteData();
+            } else {
+                alert('Ingredient already added to this recipe.');
+            }
+        });
+
+        function checkAchievements() {
+            // Example logic to check and update achievements
+            if (Object.values(addedIngredients).every(ingredients => ingredients.length > 0)) {
+                achievementsEarned['Waste Warrior'] = true;
+                $(`[data-achievement='Waste Warrior']`).removeClass('inactive');
+            }
+
+            if (addedIngredients['Cheese Omelette'] && addedIngredients['Egg Sandwich']) {
+                achievementsEarned['Eco Chef'] = true;
+                $(`[data-achievement='Eco Chef']`).removeClass('inactive');
+            }
+
+            if (Object.values(addedIngredients).flat().length >= 10) {
+                achievementsEarned['Sustainability Guru'] = true;
+                $(`[data-achievement='Sustainability Guru']`).removeClass('inactive');
             }
         }
 
-        function submitFeedback() {
-            const feedbackInput = document.getElementById('feedback-input').value;
-            if (feedbackInput) {
-                const feedbackList = document.getElementById('feedback-list');
-                const li = document.createElement('li');
-                li.textContent = feedbackInput;
-                feedbackList.appendChild(li);
-                document.getElementById('feedback-input').value = '';
-                // Simulate sending feedback to the server
-                // In a real application, use fetch or XMLHttpRequest to send feedback data
-            }
+        // Chart for dashboard
+        const ctx = document.getElementById('wasteChart').getContext('2d');
+        const wasteChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Week 1', 'Week 2', 'Week 3'],
+                datasets: [{
+                    label: 'Food Waste (kg)',
+                    data: [5, 3, 2],
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: { scales: { y: { beginAtZero: true } } }
+        });
+
+        function updateWasteData() {
+            // Placeholder function to update waste data
+            console.log('Updating waste data...');
         }
+    });
     </script>
 </body>
 </html>
